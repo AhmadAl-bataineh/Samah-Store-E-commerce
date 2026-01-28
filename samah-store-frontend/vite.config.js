@@ -6,6 +6,8 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
+    // Explicitly set public directory for static assets (favicon, manifest, etc.)
+    publicDir: 'public',
     server: {
       port: 5173,
       // Proxy API calls to backend in development
@@ -25,6 +27,8 @@ export default defineConfig(({ mode }) => {
     // Production build optimization
     build: {
       sourcemap: false,
+      // Ensure public directory is copied
+      copyPublicDir: true,
       rollupOptions: {
         output: {
           manualChunks: {

@@ -4,14 +4,14 @@
   "description": "متجر أزياء نسائية عصرية وأنيقة في الأردن",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#B54B63",
+  "background_color": "#FDF6F3",
+  "theme_color": "#C9A87C",
   "orientation": "portrait-primary",
   "dir": "rtl",
   "lang": "ar",
   "icons": [
     {
-      "src": "/favicon.png",
+      "src": "/favicon-32x32.png",
       "sizes": "32x32",
       "type": "image/png"
     },
