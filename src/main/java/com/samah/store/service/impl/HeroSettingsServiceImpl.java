@@ -6,6 +6,8 @@ import com.samah.store.dto.HeroSettingsResponseDto;
 import com.samah.store.repository.HeroSettingsRepository;
 import com.samah.store.service.HeroSettingsService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +19,7 @@ public class HeroSettingsServiceImpl implements HeroSettingsService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "hero", key = "'public'")
     public HeroSettingsResponseDto getPublicHero() {
         // Use non-persisting fetch for public GET
         HeroSettings settings = getExistingOrDefaultInMemorySettings();
@@ -33,6 +36,7 @@ public class HeroSettingsServiceImpl implements HeroSettingsService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "hero", allEntries = true)
     public HeroSettingsResponseDto updateHero(HeroSettingsRequestDto dto) {
         HeroSettings settings = getOrCreateDefaultSettings();
 

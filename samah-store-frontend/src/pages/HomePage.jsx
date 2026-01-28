@@ -13,6 +13,7 @@ import { getImageUrl } from '../utils/imageUtils';
 import { heroApi } from '../services/heroApi';
 import { useToast } from '../context/ToastContext';
 import heroImageFallback from '../assets/heroImage.jpg';
+import { updatePageMeta } from '../utils/seo';
 
 // ══════════════════════════════════════════════════════════════════
 // HERO SECTION (Dynamic from backend)
@@ -77,17 +78,17 @@ const HeroSection = ({ heroData, loading }) => {
     return (
       <section className="relative bg-ivory-100 overflow-hidden">
         <div className="container-main">
-          <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 min-h-[600px] lg:min-h-[680px] items-center">
-            <div className="py-16 lg:py-20 order-2 lg:order-1">
-              <div className="max-w-lg space-y-6 animate-pulse">
-                <div className="h-4 bg-ivory-200 rounded w-1/4" />
-                <div className="h-12 bg-ivory-200 rounded w-3/4" />
-                <div className="h-20 bg-ivory-100 rounded" />
-                <div className="h-12 bg-ivory-200 rounded w-1/3" />
+          <div className="grid lg:grid-cols-2 gap-6 lg:gap-16 min-h-[400px] sm:min-h-[480px] lg:min-h-[600px] items-center py-6 sm:py-8 lg:py-0">
+            <div className="order-2 lg:order-1">
+              <div className="max-w-lg space-y-4 sm:space-y-6 animate-pulse">
+                <div className="h-3 sm:h-4 bg-ivory-200 rounded w-1/4" />
+                <div className="h-8 sm:h-12 bg-ivory-200 rounded w-3/4" />
+                <div className="h-16 sm:h-20 bg-ivory-100 rounded" />
+                <div className="h-10 sm:h-12 bg-ivory-200 rounded w-1/3" />
               </div>
             </div>
-            <div className="relative order-1 lg:order-2 h-[380px] lg:h-full">
-              <div className="absolute inset-0 lg:inset-y-8 lg:-right-8 lg:left-0 bg-ivory-200 rounded-2xl animate-pulse" />
+            <div className="relative order-1 lg:order-2">
+              <div className="aspect-[4/3] sm:aspect-[3/4] lg:aspect-[4/5] bg-ivory-200 rounded-xl sm:rounded-2xl animate-pulse" />
             </div>
           </div>
         </div>
@@ -98,32 +99,32 @@ const HeroSection = ({ heroData, loading }) => {
   return (
     <section className="relative bg-ivory-100 overflow-hidden">
       <div className="container-main">
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 min-h-[600px] md:min-h-[600px] lg:min-h-[680px] items-center">
+        <div className="grid lg:grid-cols-2 gap-6 lg:gap-16 min-h-[400px] sm:min-h-[480px] lg:min-h-[600px] items-center py-6 sm:py-8 lg:py-12">
           {/* Content */}
-          <div className="py-8 sm:py-12 lg:py-20 order-2 lg:order-1">
+          <div className="order-2 lg:order-1">
             <div className="max-w-lg">
               {/* Badge */}
-              <span className="inline-block text-xs tracking-[0.2em] uppercase text-berry-500 font-medium mb-6">
+              <span className="inline-block text-[10px] sm:text-xs tracking-[0.2em] uppercase text-berry-500 font-medium mb-4 sm:mb-6">
                 {hero.badgeText}
               </span>
 
               {/* Headline */}
               <h1
-                className="font-serif text-charcoal-800 mb-6"
-                style={{ fontSize: 'clamp(2.5rem, 5vw, 3.5rem)', lineHeight: 1.1 }}
+                className="font-serif text-charcoal-800 mb-4 sm:mb-6"
+                style={{ fontSize: 'clamp(1.75rem, 5vw, 3.5rem)', lineHeight: 1.1 }}
               >
                 {hero.titleLine1}
                 <span className="block text-rose-400">{hero.titleLine2}</span>
               </h1>
 
               {/* Subheadline */}
-              <p className="text-charcoal-500 text-body-lg mb-10 max-w-md leading-relaxed">
+              <p className="text-charcoal-500 text-sm sm:text-body-lg mb-6 sm:mb-10 max-w-md leading-relaxed">
                 {hero.description}
               </p>
 
               {/* CTAs */}
-              <div className="flex flex-wrap gap-4">
-                <Link to={hero.ctaLink} className="btn-primary px-8 py-3.5 rounded-lg w-full sm:w-auto text-center">
+              <div className="flex flex-wrap gap-3 sm:gap-4">
+                <Link to={hero.ctaLink} className="btn-primary px-6 sm:px-8 py-3 sm:py-3.5 rounded-xl w-full sm:w-auto text-center text-sm sm:text-base">
                   {hero.ctaText}
                   <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
                 </Link>
@@ -131,13 +132,13 @@ const HeroSection = ({ heroData, loading }) => {
             </div>
           </div>
 
-          {/* Image */}
-          <div className="relative order-1 lg:order-2 aspect-[4/5] sm:aspect-[3/4] md:aspect-[4/3] lg:h-full lg:aspect-auto">
-            <div className="absolute inset-0 lg:inset-y-8 lg:-right-8 lg:left-0 overflow-hidden rounded-2xl shadow-sm">
+          {/* Image - Unified aspect ratio approach */}
+          <div className="relative order-1 lg:order-2">
+            <div className="aspect-[4/3] sm:aspect-[3/4] lg:aspect-[4/5] overflow-hidden rounded-xl sm:rounded-2xl shadow-soft">
               <img
                 src={resolvedUrl || heroImageFallback}
                 alt="Samah Fashion Collection"
-                className="w-full h-full object-cover object-center rounded-2xl"
+                className="w-full h-full object-cover object-center"
                 loading="eager"
                 decoding="async"
                 onError={(e) => {
@@ -153,14 +154,8 @@ const HeroSection = ({ heroData, loading }) => {
                   e.currentTarget.src = heroImageFallback;
                 }}
               />
-              {/* Subtle editorial gradient overlay to add depth and improve perceived contrast (very light, preserves brand colors) */}
-              <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-l from-black/8 via-transparent to-transparent" />
-              {/* DEV-only diagnostics: show raw/resolved/fallback state */}
-              {import.meta.env.DEV && (
-                <div className="mt-2 text-xs text-gray-500">
-                  raw: {String(hero.heroImageUrl || 'null')} — resolved: {String(resolvedUrl)} — fallback: {fallbackActive ? 'yes' : 'no'}
-                </div>
-              )}
+              {/* Subtle editorial gradient overlay */}
+              <div className="pointer-events-none absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-l from-black/8 via-transparent to-transparent" />
             </div>
           </div>
         </div>
@@ -177,16 +172,16 @@ const ProductSpotlight = ({ product, loading }) => {
 
   if (loading) {
     return (
-        <section className="section bg-white">
+        <section className="py-8 sm:py-12 lg:py-16 bg-white">
           <div className="container-main">
             <div className="max-w-5xl mx-auto">
-              <div className="grid lg:grid-cols-2 gap-12 items-center">
-                <div className="aspect-[4/5] bg-ivory-200 rounded-xl animate-pulse" />
-                <div className="space-y-4">
-                  <div className="h-4 bg-ivory-200 rounded w-1/4" />
-                  <div className="h-8 bg-ivory-200 rounded w-3/4" />
-                  <div className="h-20 bg-ivory-100 rounded" />
-                  <div className="h-10 bg-ivory-200 rounded w-1/3" />
+              <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+                <div className="aspect-[4/3] sm:aspect-[4/5] lg:aspect-product bg-ivory-200 rounded-xl sm:rounded-2xl animate-pulse" />
+                <div className="space-y-3 sm:space-y-4">
+                  <div className="h-3 sm:h-4 bg-ivory-200 rounded w-1/4" />
+                  <div className="h-6 sm:h-8 bg-ivory-200 rounded w-3/4" />
+                  <div className="h-16 sm:h-20 bg-ivory-100 rounded" />
+                  <div className="h-8 sm:h-10 bg-ivory-200 rounded w-1/3" />
                 </div>
               </div>
             </div>
@@ -198,34 +193,34 @@ const ProductSpotlight = ({ product, loading }) => {
   if (!product) return null;
 
   return (
-      <section className="section bg-white">
+      <section className="py-8 sm:py-12 lg:py-16 bg-white">
         <div className="container-main">
           {/* Section Header */}
-          <div className="text-center mb-14">
-          <span className="text-xs tracking-[0.2em] uppercase text-berry-500 font-medium mb-3 block">
+          <div className="text-center mb-8 sm:mb-10 lg:mb-14">
+          <span className="text-[10px] sm:text-xs tracking-[0.2em] uppercase text-berry-500 font-medium mb-2 sm:mb-3 block">
             المنتج المميز
           </span>
-            <h2 className="font-serif text-charcoal-800 text-display-sm">اختيارنا لكِ</h2>
+            <h2 className="font-serif text-charcoal-800 text-xl sm:text-2xl lg:text-display-sm">اختيارنا لكِ</h2>
           </div>
 
           <div className="max-w-5xl mx-auto">
-            <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            <div className="grid lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-16 items-center">
               {/* Product Image */}
               <Link
                   to={`/products/${product.slug || product.id}`}
-                  className="group relative aspect-[4/5] lg:aspect-product bg-ivory-100 rounded-xl overflow-hidden"
+                  className="group relative aspect-[4/3] sm:aspect-[4/5] lg:aspect-product bg-ivory-100 rounded-xl sm:rounded-2xl overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-berry-400 focus-visible:ring-offset-2"
               >
                 {product.primaryImageUrl ? (
                     <img
                         src={getImageUrl(product.primaryImageUrl)}
                         alt={product.name}
-                        className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
+                        className="w-full h-full object-cover object-center transition-transform duration-700 sm:group-hover:scale-105"
                         loading="lazy"
                         decoding="async"
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-rose-100 to-ivory-100">
-                      <span className="font-serif text-5xl text-rose-300">S</span>
+                      <span className="font-serif text-4xl sm:text-5xl text-rose-300">S</span>
                     </div>
                 )}
               </Link>
@@ -233,30 +228,33 @@ const ProductSpotlight = ({ product, loading }) => {
               {/* Product Details */}
               <div>
                 {product.category && (
-                    <span className="text-xs tracking-[0.15em] uppercase text-charcoal-500 mb-3 block">
+                    <span className="text-[10px] sm:text-xs tracking-[0.15em] uppercase text-charcoal-500 mb-2 sm:mb-3 block">
                   {product.category.name}
                 </span>
                 )}
 
-                <h3 className="font-serif text-charcoal-800 text-heading mb-4">{product.name}</h3>
+                <h3 className="font-serif text-charcoal-800 text-lg sm:text-xl lg:text-heading mb-3 sm:mb-4">{product.name}</h3>
 
-                <p className="text-charcoal-500 leading-relaxed mb-8">
+                <p className="text-charcoal-500 text-sm sm:text-base leading-relaxed mb-6 sm:mb-8 line-clamp-3 sm:line-clamp-none">
                   {product.description ||
                       'قطعة مميزة تجمع بين الأناقة والراحة، مصممة بعناية لتمنحك إطلالة استثنائية'}
                 </p>
 
                 {/* Price */}
-                <div className="mb-8">
+                <div className="mb-6 sm:mb-8">
                   {product.minVariantPrice != null ? (
-                      <span className="font-serif text-2xl text-charcoal-800">
+                      <span className="font-serif text-xl sm:text-2xl text-charcoal-800 tabular-nums">
                         {Number(product.minVariantPrice).toFixed(2)} د.أ
                       </span>
                   ) : (
-                      <span className="font-serif text-2xl text-charcoal-800">السعر غير متوفر</span>
+                      <span className="font-serif text-xl sm:text-2xl text-charcoal-800">السعر غير متوفر</span>
                   )}
                 </div>
 
-                <Link to={`/products/${product.slug || product.id}`} className="btn-primary px-8 py-3.5 rounded-lg">
+                <Link
+                  to={`/products/${product.slug || product.id}`}
+                  className="btn-primary px-6 sm:px-8 py-3 sm:py-3.5 rounded-xl text-sm sm:text-base w-full sm:w-auto text-center inline-flex items-center justify-center gap-2"
+                >
                   عرض التفاصيل
                   <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
                 </Link>
@@ -274,17 +272,17 @@ const ProductSpotlight = ({ product, loading }) => {
 
 const NewArrivals = ({ products, loading }) => {
   return (
-      <section className="section bg-ivory-100">
+      <section className="py-8 sm:py-12 lg:py-16 bg-ivory-100">
         <div className="container-main">
           {/* Section Header */}
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-12">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 sm:gap-4 mb-6 sm:mb-8 lg:mb-12">
             <div>
-            <span className="text-xs tracking-[0.2em] uppercase text-berry-500 font-medium mb-2 block">
+            <span className="text-[10px] sm:text-xs tracking-[0.2em] uppercase text-berry-500 font-medium mb-1 sm:mb-2 block">
               جديد
             </span>
-              <h2 className="font-serif text-charcoal-800 text-display-sm">وصل حديثاً</h2>
+              <h2 className="font-serif text-charcoal-800 text-xl sm:text-2xl lg:text-display-sm">وصل حديثاً</h2>
             </div>
-            <Link to="/products?sort=createdAt,desc" className="btn-ghost group">
+            <Link to="/products?sort=createdAt,desc" className="btn-ghost group text-sm">
               <span>عرض الكل</span>
               <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" strokeWidth={1.5} />
             </Link>
@@ -292,17 +290,17 @@ const NewArrivals = ({ products, loading }) => {
 
           {/* Products Grid */}
           {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
                 {[...Array(4)].map((_, i) => (
                     <div key={i} className="animate-pulse">
-                      <div className="aspect-product bg-ivory-200 rounded-lg mb-4" />
-                      <div className="h-4 bg-ivory-200 rounded w-3/4 mb-2" />
-                      <div className="h-4 bg-ivory-100 rounded w-1/2" />
+                      <div className="aspect-[3/4] bg-ivory-200 rounded-xl sm:rounded-2xl mb-2 sm:mb-3" />
+                      <div className="h-2.5 sm:h-3 bg-ivory-200 rounded w-3/4 mb-1.5 sm:mb-2" />
+                      <div className="h-2.5 sm:h-3 bg-ivory-100 rounded w-1/2" />
                     </div>
                 ))}
               </div>
           ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
                 {(products || []).slice(0, 8).map((product, index) => (
                     <div
                         key={product.id}
@@ -331,16 +329,16 @@ const BRAND_VALUES = [
 
 const BrandPromise = () => {
   return (
-      <section className="py-14 bg-white border-y border-charcoal-200">
+      <section className="py-8 sm:py-10 lg:py-14 bg-white border-y border-charcoal-200/60">
         <div className="container-main">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8">
             {BRAND_VALUES.map((item, index) => (
                 <div key={index} className="text-center">
-                  <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-rose-100 flex items-center justify-center">
-                    <item.icon className="w-5 h-5 text-rose-400" strokeWidth={1.5} />
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-3 sm:mb-4 rounded-full bg-rose-100 flex items-center justify-center">
+                    <item.icon className="w-4 h-4 sm:w-5 sm:h-5 text-rose-400" strokeWidth={1.5} />
                   </div>
-                  <h3 className="font-medium text-charcoal-800 mb-1">{item.title}</h3>
-                  <p className="text-sm text-charcoal-500">{item.desc}</p>
+                  <h3 className="font-medium text-charcoal-800 text-sm sm:text-base mb-0.5 sm:mb-1">{item.title}</h3>
+                  <p className="text-xs sm:text-sm text-charcoal-500">{item.desc}</p>
                 </div>
             ))}
           </div>
@@ -357,14 +355,14 @@ const Newsletter = () => {
   const [email, setEmail] = useState('');
 
   return (
-      <section className="section bg-ivory-200">
+      <section className="py-8 sm:py-12 lg:py-16 bg-ivory-200">
         <div className="container-main">
           <div className="max-w-lg mx-auto text-center">
-          <span className="text-xs tracking-[0.2em] uppercase text-berry-500 font-medium mb-3 block">
+          <span className="text-[10px] sm:text-xs tracking-[0.2em] uppercase text-berry-500 font-medium mb-2 sm:mb-3 block">
             النشرة البريدية
           </span>
-            <h2 className="font-serif text-charcoal-800 text-display-sm mb-4">ابقي على اطلاع</h2>
-            <p className="text-charcoal-500 mb-8">اشتركي للحصول على أحدث العروض والمجموعات الجديدة</p>
+            <h2 className="font-serif text-charcoal-800 text-xl sm:text-2xl lg:text-display-sm mb-3 sm:mb-4">ابقي على اطلاع</h2>
+            <p className="text-charcoal-500 text-sm sm:text-base mb-6 sm:mb-8">اشتركي للحصول على أحدث العروض والمجموعات الجديدة</p>
 
             <form className="flex flex-col sm:flex-row gap-3">
               <input
@@ -372,10 +370,10 @@ const Newsletter = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="بريدك الإلكتروني"
-                  className="input-field flex-1 text-center sm:text-right"
+                  className="input-field flex-1 text-center sm:text-right text-sm sm:text-base py-3"
                   required
               />
-              <button type="submit" className="btn-primary px-8 py-3 rounded-lg whitespace-nowrap">
+              <button type="submit" className="btn-primary px-6 sm:px-8 py-3 rounded-xl whitespace-nowrap text-sm sm:text-base min-h-[44px]">
                 اشتراك
               </button>
             </form>
@@ -396,6 +394,15 @@ const HomePage = () => {
   const [latestProducts, setLatestProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const { error } = useToast();
+
+  // SEO: Update page meta
+  useEffect(() => {
+    updatePageMeta({
+      title: 'الصفحة الرئيسية',
+      description: 'سماح ستور - متجر أزياء نسائية عصرية وأنيقة. تسوقي أحدث الموديلات بأفضل الأسعار مع توصيل سريع في الأردن.',
+      url: '/',
+    });
+  }, []);
 
   // Fetch hero settings
   useEffect(() => {
@@ -446,7 +453,7 @@ const HomePage = () => {
   }, [error]);
 
   return (
-      <div className="bg-ivory-100 pt-16">
+      <div className="bg-ivory-100 pt-14 sm:pt-16">
         <HeroSection heroData={heroData} loading={heroLoading} />
         <ProductSpotlight product={featuredProduct} loading={loading} />
         <NewArrivals products={latestProducts} loading={loading} />

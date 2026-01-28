@@ -12,6 +12,7 @@ import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import { ShoppingCart, ArrowRight } from 'lucide-react';
 import { getImageUrl } from '../utils/imageUtils';
+import { updatePageMeta, setStructuredData, removeStructuredData, getProductSchema, getBreadcrumbSchema } from '../utils/seo';
 
 const ProductDetailsPage = () => {
   const { slug } = useParams();
@@ -48,6 +49,42 @@ const ProductDetailsPage = () => {
     };
     fetchProduct();
   }, [slug]);
+
+  // SEO: Update meta tags and structured data when product loads
+  useEffect(() => {
+    if (product) {
+      const price = product.variants?.[0]?.price || product.minVariantPrice;
+      const image = product.images?.[0]?.url ? getImageUrl(product.images[0].url) : null;
+
+      updatePageMeta({
+        title: product.name,
+        description: product.description || `${product.name} - تسوقي الآن من سماح ستور بسعر ${price} د.أ`,
+        image: image,
+        url: `/products/${product.slug}`,
+        type: 'product',
+      });
+
+      // Add Product schema
+      setStructuredData(getProductSchema(product), 'product-schema');
+
+      // Add Breadcrumb schema
+      const breadcrumbs = [
+        { name: 'الرئيسية', url: '/' },
+        { name: 'المنتجات', url: '/products' },
+      ];
+      if (product.category) {
+        breadcrumbs.push({ name: product.category.name, url: `/products?categoryId=${product.category.id}` });
+      }
+      breadcrumbs.push({ name: product.name, url: `/products/${product.slug}` });
+      setStructuredData(getBreadcrumbSchema(breadcrumbs), 'breadcrumb-schema');
+    }
+
+    // Cleanup structured data on unmount
+    return () => {
+      removeStructuredData('product-schema');
+      removeStructuredData('breadcrumb-schema');
+    };
+  }, [product]);
 
 
   const handleAddToCart = async () => {

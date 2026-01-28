@@ -23,7 +23,7 @@ import CheckoutPage from '../pages/CheckoutPage';
 import OrdersPage from '../pages/OrdersPage';
 import OrderDetailsPage from '../pages/OrderDetailsPage';
 
-// Admin pages
+// Admin pages (now used by both ADMIN and EMPLOYEE roles)
 import AdminDashboard from '../pages/admin/AdminDashboard';
 import AdminOrders from '../pages/admin/AdminOrders';
 import AdminUsers from '../pages/admin/AdminUsers';
@@ -33,15 +33,13 @@ import AdminCoupons from '../pages/admin/AdminCoupons';
 import AdminProducts from '../pages/admin/AdminProducts';
 import AdminHeroSettings from '../pages/admin/AdminHeroSettings';
 
-// Employee pages
-import EmployeeDashboard from '../pages/employee/EmployeeDashboard';
-import EmployeeOrders from '../pages/employee/EmployeeOrders';
-import EmployeeOrderDetails from '../pages/employee/EmployeeOrderDetails';
-
 // 403 Page
 import ForbiddenPage from '../pages/ForbiddenPage';
 
 import ProtectedRoute from './ProtectedRoute';
+
+// Allowed roles for admin dashboard (EMPLOYEE now has same access as ADMIN)
+const ADMIN_ROLES = ['ADMIN', 'EMPLOYEE'];
 
 const AppRoutes = () => {
   const { user, loading } = useAuth();
@@ -51,10 +49,10 @@ const AppRoutes = () => {
   }
 
   // Redirect authenticated users from home/login based on role
+  // Both ADMIN and EMPLOYEE now go to admin dashboard
   const getDefaultRoute = () => {
     if (!user) return null;
-    if (user.role === 'ADMIN') return '/admin/dashboard';
-    if (user.role === 'EMPLOYEE') return '/employee/dashboard';
+    if (user.role === 'ADMIN' || user.role === 'EMPLOYEE') return '/admin/dashboard';
     return '/';
   };
 
@@ -97,20 +95,18 @@ const AppRoutes = () => {
         <Route path="*" element={<NotFoundPage />} />
       </Route>
 
-      {/* Admin routes (no public header/footer) */}
-      <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={['ADMIN']}><AdminDashboard /></ProtectedRoute>} />
-      <Route path="/admin/orders" element={<ProtectedRoute allowedRoles={['ADMIN']}><AdminOrders /></ProtectedRoute>} />
-      <Route path="/admin/users" element={<ProtectedRoute allowedRoles={['ADMIN']}><AdminUsers /></ProtectedRoute>} />
-      <Route path="/admin/categories" element={<ProtectedRoute allowedRoles={['ADMIN']}><AdminCategories /></ProtectedRoute>} />
-      <Route path="/admin/products" element={<ProtectedRoute allowedRoles={['ADMIN']}><AdminProducts /></ProtectedRoute>} />
-      <Route path="/admin/shipping-zones" element={<ProtectedRoute allowedRoles={['ADMIN']}><AdminShippingZones /></ProtectedRoute>} />
-      <Route path="/admin/coupons" element={<ProtectedRoute allowedRoles={['ADMIN']}><AdminCoupons /></ProtectedRoute>} />
-      <Route path="/admin/hero" element={<ProtectedRoute allowedRoles={['ADMIN']}><AdminHeroSettings /></ProtectedRoute>} />
+      {/* Admin routes - now accessible by both ADMIN and EMPLOYEE roles */}
+      <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={ADMIN_ROLES}><AdminDashboard /></ProtectedRoute>} />
+      <Route path="/admin/orders" element={<ProtectedRoute allowedRoles={ADMIN_ROLES}><AdminOrders /></ProtectedRoute>} />
+      <Route path="/admin/users" element={<ProtectedRoute allowedRoles={ADMIN_ROLES}><AdminUsers /></ProtectedRoute>} />
+      <Route path="/admin/categories" element={<ProtectedRoute allowedRoles={ADMIN_ROLES}><AdminCategories /></ProtectedRoute>} />
+      <Route path="/admin/products" element={<ProtectedRoute allowedRoles={ADMIN_ROLES}><AdminProducts /></ProtectedRoute>} />
+      <Route path="/admin/shipping-zones" element={<ProtectedRoute allowedRoles={ADMIN_ROLES}><AdminShippingZones /></ProtectedRoute>} />
+      <Route path="/admin/coupons" element={<ProtectedRoute allowedRoles={ADMIN_ROLES}><AdminCoupons /></ProtectedRoute>} />
+      <Route path="/admin/hero" element={<ProtectedRoute allowedRoles={ADMIN_ROLES}><AdminHeroSettings /></ProtectedRoute>} />
 
-      {/* Employee routes (no public header/footer) */}
-      <Route path="/employee/dashboard" element={<ProtectedRoute allowedRoles={['EMPLOYEE']}><EmployeeDashboard /></ProtectedRoute>} />
-      <Route path="/employee/orders" element={<ProtectedRoute allowedRoles={['EMPLOYEE']}><EmployeeOrders /></ProtectedRoute>} />
-      <Route path="/employee/orders/:id" element={<ProtectedRoute allowedRoles={['EMPLOYEE']}><EmployeeOrderDetails /></ProtectedRoute>} />
+      {/* Legacy employee routes - redirect to admin dashboard for backward compatibility */}
+      <Route path="/employee/*" element={<Navigate to="/admin/dashboard" replace />} />
     </Routes>
   );
 };

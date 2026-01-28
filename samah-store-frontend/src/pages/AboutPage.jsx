@@ -1,8 +1,19 @@
+import { useEffect } from 'react';
 import Container from '../components/layout/Container';
 import SectionTitle from '../components/common/SectionTitle';
 import { Heart, Target, Award } from 'lucide-react';
+import { updatePageMeta } from '../utils/seo';
 
 const AboutPage = () => {
+  // SEO
+  useEffect(() => {
+    updatePageMeta({
+      title: 'من نحن',
+      description: 'تعرفي على سماح ستور - متجر أزياء نسائية عصرية في الأردن. نقدم أفضل المنتجات بجودة عالية وأسعار مناسبة مع توصيل سريع.',
+      url: '/about',
+    });
+  }, []);
+
   return (
     <div className="py-8">
       <Container>

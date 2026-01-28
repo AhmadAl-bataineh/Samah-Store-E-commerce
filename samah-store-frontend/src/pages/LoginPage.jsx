@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -6,6 +6,7 @@ import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import Container from '../components/layout/Container';
 import { normalizeRole, ROLES } from '../utils/roleUtils';
+import { updatePageMeta } from '../utils/seo';
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({ usernameOrEmail: '', password: '' });
@@ -13,6 +14,16 @@ const LoginPage = () => {
   const { login } = useAuth();
   const { success, error } = useToast();
   const navigate = useNavigate();
+
+  // SEO: noindex for login page
+  useEffect(() => {
+    updatePageMeta({
+      title: 'تسجيل الدخول',
+      description: 'تسجيل الدخول إلى حسابك في سماح ستور',
+      url: '/login',
+      noindex: true,
+    });
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -24,11 +35,10 @@ const LoginPage = () => {
       // Navigate based on role from response (not AuthContext state)
       const role = normalizeRole(response.user?.role);
 
+      // Both ADMIN and EMPLOYEE go to admin dashboard
       let targetRoute = '/';
-      if (role === ROLES.ADMIN) {
+      if (role === ROLES.ADMIN || role === ROLES.EMPLOYEE) {
         targetRoute = '/admin/dashboard';
-      } else if (role === ROLES.EMPLOYEE) {
-        targetRoute = '/employee/dashboard';
       }
 
       navigate(targetRoute, { replace: true });

@@ -89,7 +89,7 @@ public class ProductServiceImpl implements ProductService {
                 p.getSlug(),
                 p.isActive(),
                 p.isDeleted(),
-                new CategoryDto(p.getCategory().getId(), p.getCategory().getName(), p.getCategory().getSlug(), p.getCategory().isActive()),
+                new CategoryDto(p.getCategory().getId(), p.getCategory().getName(), p.getCategory().getSlug(), p.getCategory().isActive(), p.getCategory().getUpdatedAt()),
                 primaryImages.get(p.getId()),
                 minPrices.get(p.getId())
         )).toList();
@@ -192,13 +192,14 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private ProductDto toDto(Product product, List<ProductVariant> variants, List<ProductImage> images) {
-        CategoryDto categoryDto = new CategoryDto(product.getCategory().getId(), product.getCategory().getName(), product.getCategory().getSlug(), product.getCategory().isActive());
+        CategoryDto categoryDto = new CategoryDto(product.getCategory().getId(), product.getCategory().getName(), product.getCategory().getSlug(), product.getCategory().isActive(), product.getCategory().getUpdatedAt());
         List<ProductVariantDto> variantDtos = variants == null ? null : variants.stream()
                 .map(v -> new ProductVariantDto(v.getId(), v.getSku(), v.getSize(), v.getColor(), v.getPrice(), v.getStockQuantity(), v.isActive(), v.isDeleted()))
                 .toList();
         List<ProductImageDto> imageDtos = images == null ? null : images.stream()
                 .map(i -> new ProductImageDto(i.getId(), i.getUrl(), i.getSortOrder()))
                 .toList();
-        return new ProductDto(product.getId(), product.getName(), product.getSlug(), product.getDescription(), product.isActive(), product.isDeleted(), categoryDto, imageDtos, variantDtos);
+        return new ProductDto(product.getId(), product.getName(), product.getSlug(), product.getDescription(),
+                product.isActive(), product.isDeleted(), categoryDto, imageDtos, variantDtos, product.getUpdatedAt());
     }
 }

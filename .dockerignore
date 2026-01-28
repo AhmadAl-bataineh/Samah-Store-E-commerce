@@ -8,16 +8,21 @@
 .vscode/
 *.iml
 
-# Build outputs
+# Build outputs (backend)
 target/
-dist/
-build/
 
-# Frontend
-samah-store-frontend/
-node_modules/
-package-lock.json
-package.json
+# Root-level node files (not frontend)
+/node_modules/
+/package-lock.json
+/package.json
+
+# Frontend build outputs and node_modules (exclude heavy folders)
+samah-store-frontend/node_modules/
+samah-store-frontend/dist/
+samah-store-frontend/.vite/
+
+# Do NOT exclude samah-store-frontend source files - needed for nginx build
+# Do NOT exclude nginx folder - needed for nginx build
 
 # Documentation
 *.md
@@ -31,6 +36,7 @@ src/test/
 .env.local
 .env.development
 .env.test
+.env.example
 
 # Logs
 *.log
@@ -42,4 +48,7 @@ Thumbs.db
 
 # Uploads (will be created in container)
 uploads/
+
+# SSL certificates (sensitive)
+nginx/ssl/
 

@@ -6,6 +6,8 @@ import com.samah.store.exception.ConflictException;
 import com.samah.store.exception.NotFoundException;
 import com.samah.store.repository.CategoryRepository;
 import com.samah.store.service.CategoryService;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +24,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "categories", allEntries = true)
     public CategoryDto create(String name, String slug, boolean active) {
         categoryRepository.findBySlug(slug).ifPresent(c -> {
             throw new ConflictException("Category slug already exists");
@@ -36,6 +39,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "categories", allEntries = true)
     public CategoryDto update(Long id, String name, String slug, boolean active) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Category not found"));
@@ -50,6 +54,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "categories", allEntries = true)
     public void delete(Long id) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Category not found"));
@@ -72,15 +77,16 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "categories", key = "'public'")
     public List<CategoryDto> listPublic() {
-        return categoryRepository.findAll().stream()
-                .filter(Category::isActive)
+        // Filter in SQL for better performance
+        return categoryRepository.findByActiveTrue().stream()
                 .map(this::toDto)
                 .toList();
     }
 
     private CategoryDto toDto(Category category) {
-        return new CategoryDto(category.getId(), category.getName(), category.getSlug(), category.isActive());
+        return new CategoryDto(category.getId(), category.getName(), category.getSlug(), category.isActive(), category.getUpdatedAt());
     }
 }
 

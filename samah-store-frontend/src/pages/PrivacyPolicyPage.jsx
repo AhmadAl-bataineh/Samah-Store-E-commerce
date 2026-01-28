@@ -1,7 +1,18 @@
+import { useEffect } from 'react';
 import Container from '../components/layout/Container';
 import SectionTitle from '../components/common/SectionTitle';
+import { updatePageMeta } from '../utils/seo';
 
 const PrivacyPolicyPage = () => {
+  // SEO
+  useEffect(() => {
+    updatePageMeta({
+      title: 'سياسة الخصوصية',
+      description: 'سياسة الخصوصية لمتجر سماح ستور - كيف نحمي بياناتك الشخصية ونستخدمها.',
+      url: '/privacy',
+    });
+  }, []);
+
   return (
     <div className="py-8">
       <Container>

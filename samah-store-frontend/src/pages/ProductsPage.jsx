@@ -10,6 +10,7 @@ import { Skeleton } from '../components/ui/Skeleton';
 import { productsApi } from '../services/productsApi';
 import { useToast } from '../context/ToastContext';
 import { Search, SlidersHorizontal } from 'lucide-react';
+import { updatePageMeta } from '../utils/seo';
 
 const ProductsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -20,6 +21,18 @@ const ProductsPage = () => {
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [showFilters, setShowFilters] = useState(false);
   const { error } = useToast();
+
+  // SEO: Update page meta
+  useEffect(() => {
+    const q = searchParams.get('q');
+    updatePageMeta({
+      title: q ? `نتائج البحث: ${q}` : 'جميع المنتجات',
+      description: q
+        ? `نتائج البحث عن "${q}" في سماح ستور - تسوقي أزياء نسائية عصرية`
+        : 'تصفحي جميع منتجات سماح ستور - أزياء نسائية عصرية وأنيقة بأفضل الأسعار',
+      url: `/products${window.location.search}`,
+    });
+  }, [searchParams]);
 
   const fetchProducts = async () => {
     try {
@@ -144,14 +157,14 @@ const ProductsPage = () => {
           {/* Products Grid */}
           <div className="flex-1">
             {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
                 {[...Array(12)].map((_, i) => (
-                  <Skeleton key={i} className="h-80 rounded-2xl" />
+                  <Skeleton key={i} className="aspect-[3/4] sm:aspect-[4/5] rounded-xl sm:rounded-2xl" />
                 ))}
               </div>
             ) : products.length > 0 ? (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
                   {products.map(product => (
                     <ProductCard key={product.id} product={product} />
                   ))}

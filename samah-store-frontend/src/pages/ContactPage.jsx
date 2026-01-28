@@ -1,15 +1,25 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Container from '../components/layout/Container';
 import SectionTitle from '../components/common/SectionTitle';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { useToast } from '../context/ToastContext';
 import { Mail, Phone, MapPin } from 'lucide-react';
+import { updatePageMeta } from '../utils/seo';
 
 const ContactPage = () => {
   const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
   const [loading, setLoading] = useState(false);
   const { success } = useToast();
+
+  // SEO
+  useEffect(() => {
+    updatePageMeta({
+      title: 'تواصل معنا',
+      description: 'تواصلي مع فريق سماح ستور - نحن هنا للمساعدة. راسلينا عبر البريد الإلكتروني أو الهاتف أو نموذج التواصل.',
+      url: '/contact',
+    });
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -95,7 +105,7 @@ const ContactPage = () => {
                   </div>
                   <div>
                     <h4 className="font-bold mb-1">البريد الإلكتروني</h4>
-                    <p className="text-gray-700">info@samahstore.com</p>
+                    <p className="text-gray-700">info@samah-store.tech</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-4">

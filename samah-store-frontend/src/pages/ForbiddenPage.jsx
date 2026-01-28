@@ -6,8 +6,8 @@ const ForbiddenPage = () => {
 
   const getHomeLink = () => {
     if (!user) return '/';
-    if (user.role === 'ADMIN') return '/admin/dashboard';
-    if (user.role === 'EMPLOYEE') return '/employee/dashboard';
+    // Both ADMIN and EMPLOYEE go to admin dashboard
+    if (user.role === 'ADMIN' || user.role === 'EMPLOYEE') return '/admin/dashboard';
     return '/';
   };
 

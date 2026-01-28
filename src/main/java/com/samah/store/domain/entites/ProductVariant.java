@@ -17,6 +17,11 @@ import java.math.BigDecimal;
                         name = "uk_variant_sku",
                         columnNames = {"sku"}
                 )
+        },
+        indexes = {
+                @Index(name = "idx_variants_product", columnList = "product_id"),
+                @Index(name = "idx_variants_price", columnList = "price"),
+                @Index(name = "idx_variants_active_deleted", columnList = "active, deleted")
         })
 @Getter
 @Setter

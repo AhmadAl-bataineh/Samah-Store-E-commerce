@@ -3,6 +3,11 @@ server:
     session:
       cookie:
         same-site: strict
+  # Enable response compression for faster transfers
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/xml,text/plain
+    min-response-size: 1024
 
 spring:
   datasource:
@@ -10,14 +15,30 @@ spring:
     username: postgres
     password: Ahmad1234
     driver-class-name: org.postgresql.Driver
+    # HikariCP connection pool optimization
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 20000
+      idle-timeout: 300000
+      max-lifetime: 1200000
   jpa:
     hibernate:
+      # WARNING: Only for local dev. Production uses 'validate' (see application-prod.yaml)
+      # Run V8__add_performance_indexes.sql manually or enable Flyway before first prod deploy
       ddl-auto: update
     open-in-view: false
     properties:
       hibernate:
         format_sql: true
         default_schema: store
+        # Batch fetching to reduce N+1 queries
+        default_batch_fetch_size: 20
+        # Use batch inserts/updates
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
   flyway:
     enabled: false
     baseline-on-migrate: true
@@ -37,8 +58,14 @@ app:
   upload:
     dir: uploads
     base-url: /uploads
+  # Performance logging config
+  perf:
+    slow-request-threshold-ms: 200  # Log requests slower than this at INFO level
 
+# Default to INFO logging for performance; use dev profile for debug
 logging:
   level:
-    org.hibernate.SQL: debug
-    org.hibernate.orm.jdbc.bind: trace
+    root: info
+    com.samah.store: info
+    org.hibernate.SQL: warn
+    org.hibernate.orm.jdbc.bind: warn

@@ -1,0 +1,135 @@
+# =============================================================================
+# Docker Compose - Production Stack for Samah Store
+# =============================================================================
+# Services:
+#   - db: PostgreSQL 15 (internal only, not exposed)
+#   - backend: Spring Boot API (internal only)
+#   - nginx: Reverse proxy + Frontend SPA (ONLY publicly exposed: 80, 443)
+#
+# Usage:
+#   docker compose up -d --build
+#
+# Prerequisites:
+#   - Create .env file with production secrets (see .env.example)
+# =============================================================================
+
+version: '3.8'
+
+services:
+  # ===========================================================================
+  # PostgreSQL Database
+  # ===========================================================================
+  db:
+    image: postgres:15-alpine
+    container_name: samah-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-samah_store}
+      POSTGRES_USER: ${POSTGRES_USER:-samah}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Database password required}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Optional: init script for schema
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-samah} -d ${POSTGRES_DB:-samah_store}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - internal
+    # NOT exposed publicly - only accessible within Docker network
+
+  # ===========================================================================
+  # Spring Boot Backend API
+  # ===========================================================================
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: samah-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Spring profile
+      SPRING_PROFILES_ACTIVE: prod
+      # Database connection (uses Docker service name)
+      DATABASE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-samah_store}?currentSchema=store
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-samah}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      # JWT Secret (REQUIRED - generate with: openssl rand -base64 64)
+      JWT_SECRET: ${JWT_SECRET:?JWT secret required}
+      # CORS (same origin via reverse proxy, but keep for flexibility)
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-https://samah-store.tech,https://www.samah-store.tech}
+      # File uploads
+      UPLOAD_DIR: /app/uploads
+      UPLOAD_BASE_URL: /uploads
+      # JVM optimization for containers
+      JAVA_OPTS: >-
+        -XX:+UseContainerSupport
+        -XX:MaxRAMPercentage=75.0
+        -Djava.security.egd=file:/dev/./urandom
+    volumes:
+      # Persistent uploads directory
+      - uploads_data:/app/uploads
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+    networks:
+      - internal
+    # NOT exposed publicly - only accessible via nginx reverse proxy
+
+  # ===========================================================================
+  # Nginx (Reverse Proxy + Frontend SPA) - ONLY publicly exposed service
+  # ===========================================================================
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+    container_name: samah-nginx
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      # ONLY these ports are exposed to the internet
+      - "80:80"
+      - "443:443"
+    volumes:
+      # SSL certificates (mount after obtaining from Let's Encrypt)
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      # Serve uploaded files directly from volume
+      - uploads_data:/app/uploads:ro
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - internal
+      - external
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  internal:
+    driver: bridge
+    internal: true  # No external access
+  external:
+    driver: bridge
+
+# =============================================================================
+# Volumes (persistent data)
+# =============================================================================
+volumes:
+  postgres_data:
+    name: samah-postgres-data
+  uploads_data:
+    name: samah-uploads-data

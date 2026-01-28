@@ -11,12 +11,24 @@ export const adminApi = {
     return api.post('/api/admin/metrics/revenue-reset');
   },
 
-  // ==================== USERS & EMPLOYEES ====================
+  // ==================== USERS & ADMINS ====================
 
+  // List all admins (includes ADMIN and EMPLOYEE roles - they have same access now)
+  listAdmins: () => {
+    return api.get('/api/admin/admins');
+  },
+
+  // Create new admin user
+  createAdmin: (data) => {
+    return api.post('/api/admin/users/admins', data);
+  },
+
+  // DEPRECATED: Keep for backward compatibility
   listEmployees: () => {
     return api.get('/api/admin/employees');
   },
 
+  // DEPRECATED: Keep for backward compatibility - now routes to createAdmin
   createEmployee: (data) => {
     return api.post('/api/admin/users/employees', data);
   },
@@ -31,6 +43,11 @@ export const adminApi = {
 
   updateUserRole: (userId, role) => {
     return api.patch(`/api/admin/users/${userId}/role`, null, { params: { role } });
+  },
+
+  // Promote a user to admin role
+  promoteToAdmin: (userId) => {
+    return api.patch(`/api/admin/users/${userId}/role`, null, { params: { role: 'ADMIN' } });
   },
 
   // ==================== ORDERS ====================

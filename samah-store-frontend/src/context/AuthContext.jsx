@@ -108,11 +108,11 @@ export const AuthProvider = ({ children }) => {
 
     const normalizedRole = normalizeRole(user.role);
 
+    // Both ADMIN and EMPLOYEE go to admin dashboard
     switch (normalizedRole) {
       case ROLES.ADMIN:
-        return '/admin/dashboard';
       case ROLES.EMPLOYEE:
-        return '/employee/dashboard';
+        return '/admin/dashboard';
       case ROLES.CUSTOMER:
         return '/';
       default:

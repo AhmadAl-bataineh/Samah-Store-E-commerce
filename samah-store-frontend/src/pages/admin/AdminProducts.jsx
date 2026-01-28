@@ -48,16 +48,7 @@ const AdminProducts = () => {
   const [images, setImages] = useState([]);
   const [manageTab, setManageTab] = useState('variants'); // 'variants' | 'images'
 
-  // Bulk create state
-  const [bulkColors, setBulkColors] = useState(''); // comma separated
-  const [bulkSizes, setBulkSizes] = useState(''); // comma separated
-  const [bulkPrice, setBulkPrice] = useState('');
-  const [bulkStock, setBulkStock] = useState('');
-  const [bulkActive, setBulkActive] = useState(true);
-  const [bulkCreating, setBulkCreating] = useState(false);
-  const [bulkResult, setBulkResult] = useState(null);
-
-  // Variant modal
+  // Variant modal (single variant creation/edit)
   const [showVariantModal, setShowVariantModal] = useState(false);
   const [editingVariant, setEditingVariant] = useState(null);
   const [variantFormData, setVariantFormData] = useState({
@@ -401,86 +392,6 @@ const AdminProducts = () => {
     }
   };
 
-  // Bulk create handler
-  const handleBulkCreate = async () => {
-    if (!managingProduct) return;
-    // parse inputs
-    const colors = (bulkColors || '').split(',').map(s => s.trim()).filter(Boolean);
-    const sizes = (bulkSizes || '').split(',').map(s => s.trim()).filter(Boolean);
-    if (colors.length === 0 || sizes.length === 0) {
-      showToast('يرجى إدخال قيم لكلٍ من الألوان والمقاسات مفصولة بفواصل', 'error');
-      return;
-    }
-
-    // Build combinations
-    const combos = [];
-    for (const color of colors) {
-      for (const size of sizes) {
-        combos.push({ color, size });
-      }
-    }
-
-    // Filter out existing variants with same size+color
-    const toCreate = [];
-    const skipped = [];
-    const existingMap = new Set(variants.map(v => `${(v.color||'').trim().toLowerCase()}||${(v.size||'').trim().toLowerCase()}`));
-    for (const c of combos) {
-      const key = `${c.color.trim().toLowerCase()}||${c.size.trim().toLowerCase()}`;
-      if (existingMap.has(key)) {
-        skipped.push(`${c.color} / ${c.size}`);
-      } else {
-        toCreate.push(c);
-      }
-    }
-
-    if (toCreate.length === 0) {
-      showToast(`لا توجد تركيبات جديدة للإنشاء. تم تخطي ${skipped.length} تكرارات.`, 'info');
-      setBulkResult({ created: 0, skipped, failed: [] });
-      return;
-    }
-
-    if (!window.confirm(`سيتم إنشاء ${toCreate.length} مقاسات. المتابعة؟`)) return;
-
-    setBulkCreating(true);
-    const failures = [];
-    let created = 0;
-
-    for (const item of toCreate) {
-      // generate SKU
-      const base = (managingProduct?.slug || managingProduct?.name || managingProduct?.id || 'product').toString().trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-_]/g, '');
-      const colorPart = item.color.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-_]/g, '');
-      const sizePart = item.size.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-_]/g, '');
-      const skuCandidate = `${base}-${colorPart}-${sizePart}`;
-
-      const payload = {
-        sku: skuCandidate || null,
-        size: item.size || null,
-        color: item.color || null,
-        // keep null if the input is empty string; otherwise parse number (radix 10)
-        price: bulkPrice !== '' ? parseFloat(bulkPrice) : null,
-        stockQuantity: bulkStock !== '' ? parseInt(bulkStock, 10) : null,
-        active: !!bulkActive,
-      };
-
-      try {
-        await adminApi.createVariant(managingProduct.id, payload);
-        created += 1;
-      } catch (err) {
-        failures.push({ combo: `${item.color} / ${item.size}`, message: err.response?.data?.message || err.message });
-        // continue
-      }
-    }
-
-    // Refresh and show summary
-    await loadVariants(managingProduct.id);
-    setBulkResult({ created, skipped, failed: failures });
-    setBulkCreating(false);
-    const msgs = [];
-    if (created) msgs.push(`تم إنشاء ${created} مقاس`);
-    if (skipped.length) msgs.push(`تخطي ${skipped.length} تكرارات`);
-    if (failures.length) msgs.push(`${failures.length} فشل`);
-    showToast(msgs.join(' • '), failures.length ? 'error' : 'success');
-  };
 
   const handleOpenDeleteVariant = (variant) => {
     setDeletingVariant(variant);
@@ -972,123 +883,104 @@ const AdminProducts = () => {
             </button>
           </div>
 
-          {/* Variants Tab */}
+          {/* Variants Tab - Single variant creation (NO bulk/comma-separated) */}
           {manageTab === 'variants' && (
             <div className="space-y-4">
-              {/* Bulk create section */}
-              <div className="bg-white border border-gray-200 rounded-lg p-4">
-                <h3 className="text-sm font-medium mb-3">إضافة دفعة واحدة</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <Input
-                    label="الألوان (مفصولة بفواصل)"
-                    value={bulkColors}
-                    onChange={(e) => setBulkColors(e.target.value)}
-                    placeholder="مثال: أحمر, أصفر, أسود"
-                  />
-                  <Input
-                    label="المقاسات (مفصولة بفواصل)"
-                    value={bulkSizes}
-                    onChange={(e) => setBulkSizes(e.target.value)}
-                    placeholder="مثال: S, M, L"
-                  />
-                  <Input
-                    label="السعر الافتراضي (اختياري)"
-                    value={bulkPrice}
-                    onChange={(e) => setBulkPrice(e.target.value)}
-                    placeholder="مثال: 50.00"
-                    type="number"
-                    step="0.01"
-                  />
-                  <Input
-                    label="الكمية الافتراضية (اختياري)"
-                    value={bulkStock}
-                    onChange={(e) => setBulkStock(e.target.value)}
-                    placeholder="مثال: 100"
-                    type="number"
-                  />
+              {/* Header with Add Button */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900">المتغيرات (المقاسات والألوان)</h3>
+                  <p className="text-xs text-gray-500 mt-1">
+                    أضف كل متغير على حدة. كل متغير = لون واحد + مقاس واحد + سعر + كمية.
+                  </p>
                 </div>
-
-                <div className="flex items-center gap-3 mt-3">
-                  <input id="bulk-active" type="checkbox" checked={bulkActive} onChange={(e) => setBulkActive(e.target.checked)} className="w-4 h-4" />
-                  <label htmlFor="bulk-active" className="text-sm">نشط</label>
-                </div>
-
-                {/* Preview and action */}
-                <div className="flex items-center gap-3 mt-4 justify-between">
-                  <div className="text-sm text-gray-600">
-                    {(() => {
-                      const colors = (bulkColors||'').split(',').map(s=>s.trim()).filter(Boolean).length;
-                      const sizes = (bulkSizes||'').split(',').map(s=>s.trim()).filter(Boolean).length;
-                      const count = colors * sizes;
-                      return count > 0 ? `سيتم إنشاء ${count} مقاس` : 'أدخل الألوان والمقاسات للمعاينة';
-                    })()}
-                  </div>
-                  <div>
-                    <Button onClick={handleBulkCreate} disabled={bulkCreating || !managingProduct}>
-                      {bulkCreating ? 'جارٍ الإنشاء...' : 'إنشاء التركيبات'}
-                    </Button>
-                  </div>
-                </div>
-                {/* Result summary */}
-                {bulkResult && (
-                  <div className="mt-3 text-sm text-gray-700">
-                    {bulkResult.created ? <div>تم إنشاء: {bulkResult.created}</div> : null}
-                    {bulkResult.skipped && bulkResult.skipped.length ? <div>تخطي التكرارات: {bulkResult.skipped.join(', ')}</div> : null}
-                    {bulkResult.failed && bulkResult.failed.length ? <div className="text-red-600">فشل: {bulkResult.failed.map(f=>f.combo).join(', ')}</div> : null}
-                  </div>
-                )}
+                <Button onClick={handleOpenCreateVariant} size="small">
+                  + إضافة متغير
+                </Button>
               </div>
 
-              <Button onClick={handleOpenCreateVariant} size="small">
-                إضافة مقاس
-              </Button>
-
+              {/* Variants Table */}
               {variants.length === 0 ? (
-                <p className="text-gray-500 text-sm text-center py-8">لا توجد مقاسات</p>
+                <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+                  <p className="text-gray-500 text-sm">لا توجد متغيرات</p>
+                  <p className="text-gray-400 text-xs mt-1">أضف متغيرات للمنتج (لون + مقاس + سعر)</p>
+                </div>
               ) : (
-                <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {variants.map((variant) => (
-                    <div key={variant.id} className="border border-gray-200 rounded-lg p-3">
-                      <div className="flex justify-between items-start">
-                        <div className="space-y-1">
-                          <div className="text-sm font-medium">
-                            {variant.size && <span className="text-berry-600">مقاس: {variant.size}</span>}
-                            {variant.size && variant.color && <span className="mx-1">|</span>}
-                            {variant.color && <span className="text-purple-600">لون: {variant.color}</span>}
-                            {!variant.size && !variant.color && <span className="text-gray-500">مقاس افتراضي</span>}
-                          </div>
-                          {variant.sku && <p className="text-xs text-gray-500">SKU: {variant.sku}</p>}
-                          <p className="text-sm font-semibold text-berry-500">{variant.price} دينار</p>
-                          <p className="text-xs text-gray-600">المخزون: {variant.stockQuantity}</p>
-                          <span className={`inline-block px-2 py-0.5 rounded-full text-xs ${
-                            variant.active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                          }`}>
-                            {variant.active ? 'نشط' : 'غير نشط'}
-                          </span>
-                        </div>
-                        <div className="flex gap-1">
-                          <button
-                            onClick={() => handleUpdateStock(variant.id, variant.stockQuantity)}
-                            className="text-xs text-blue-600 hover:underline"
-                          >
-                            مخزون
-                          </button>
-                          <button
-                            onClick={() => handleOpenEditVariant(variant)}
-                            className="text-xs text-blue-600 hover:underline"
-                          >
-                            تعديل
-                          </button>
-                          <button
-                            onClick={() => handleOpenDeleteVariant(variant)}
-                            className="text-xs text-red-600 hover:underline"
-                          >
-                            حذف
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-3 py-2 text-right text-xs font-semibold text-gray-600">اللون</th>
+                        <th className="px-3 py-2 text-right text-xs font-semibold text-gray-600">المقاس</th>
+                        <th className="px-3 py-2 text-right text-xs font-semibold text-gray-600">السعر</th>
+                        <th className="px-3 py-2 text-right text-xs font-semibold text-gray-600">المخزون</th>
+                        <th className="px-3 py-2 text-right text-xs font-semibold text-gray-600">الحالة</th>
+                        <th className="px-3 py-2 text-right text-xs font-semibold text-gray-600">SKU</th>
+                        <th className="px-3 py-2 text-center text-xs font-semibold text-gray-600">الإجراءات</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {variants.map((variant) => (
+                        <tr key={variant.id} className="hover:bg-gray-50">
+                          <td className="px-3 py-2">
+                            <span className="inline-flex items-center gap-1.5">
+                              {variant.color ? (
+                                <>
+                                  <span className="w-3 h-3 rounded-full border border-gray-300" style={{ backgroundColor: variant.color.toLowerCase().includes('أسود') || variant.color.toLowerCase().includes('black') ? '#171717' : variant.color.toLowerCase().includes('أبيض') || variant.color.toLowerCase().includes('white') ? '#fff' : undefined }} />
+                                  <span className="font-medium text-purple-700">{variant.color}</span>
+                                </>
+                              ) : (
+                                <span className="text-gray-400">-</span>
+                              )}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2">
+                            {variant.size ? (
+                              <span className="font-medium text-berry-600">{variant.size}</span>
+                            ) : (
+                              <span className="text-gray-400">-</span>
+                            )}
+                          </td>
+                          <td className="px-3 py-2 font-semibold text-gray-900">{variant.price} د.أ</td>
+                          <td className="px-3 py-2">
+                            <span className={`font-medium ${variant.stockQuantity > 0 ? 'text-green-600' : 'text-red-500'}`}>
+                              {variant.stockQuantity}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2">
+                            <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
+                              variant.active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
+                            }`}>
+                              {variant.active ? 'نشط' : 'غير نشط'}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 text-xs text-gray-500 font-mono">{variant.sku || '-'}</td>
+                          <td className="px-3 py-2">
+                            <div className="flex items-center justify-center gap-2">
+                              <button
+                                onClick={() => handleUpdateStock(variant.id, variant.stockQuantity)}
+                                className="text-xs text-blue-600 hover:underline"
+                              >
+                                مخزون
+                              </button>
+                              <button
+                                onClick={() => handleOpenEditVariant(variant)}
+                                className="text-xs text-blue-600 hover:underline"
+                              >
+                                تعديل
+                              </button>
+                              <button
+                                onClick={() => handleOpenDeleteVariant(variant)}
+                                className="text-xs text-red-600 hover:underline"
+                              >
+                                حذف
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </div>

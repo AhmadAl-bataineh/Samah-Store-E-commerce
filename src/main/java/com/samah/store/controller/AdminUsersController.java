@@ -4,6 +4,7 @@ import com.samah.store.domain.entites.User;
 import com.samah.store.domain.enums.Role;
 import com.samah.store.dto.CreateEmployeeRequest;
 import com.samah.store.dto.EmployeeInfoDto;
+import com.samah.store.dto.AdminInfoDto;
 import com.samah.store.exception.BadRequestException;
 import com.samah.store.exception.ConflictException;
 import com.samah.store.exception.NotFoundException;
@@ -17,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/admin/users")
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasAnyRole('ADMIN', 'EMPLOYEE')")
 public class AdminUsersController {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -27,6 +28,40 @@ public class AdminUsersController {
         this.passwordEncoder = passwordEncoder;
     }
 
+    /**
+     * Create a new admin user (with ADMIN role)
+     * POST /api/admin/users/admins
+     */
+    @PostMapping("/admins")
+    @ResponseStatus(HttpStatus.CREATED)
+    public AdminInfoDto createAdmin(@Valid @RequestBody CreateEmployeeRequest request) {
+        // Check if username already exists
+        if (userRepository.existsByUsername(request.username())) {
+            throw new ConflictException("اسم المستخدم موجود مسبقاً");
+        }
+        // Check if email already exists
+        if (userRepository.existsByEmail(request.email())) {
+            throw new ConflictException("البريد الإلكتروني موجود مسبقاً");
+        }
+
+        User user = new User();
+        user.setUsername(request.username());
+        user.setEmail(request.email());
+        user.setPasswordHash(passwordEncoder.encode(request.password()));
+        user.setRole(Role.ADMIN);  // Create with ADMIN role
+        user.setEnabled(true);
+        user.setDeleted(false);
+        user.setTokenVersion(0);
+
+        User saved = userRepository.save(user);
+        return new AdminInfoDto(saved.getId(), saved.getUsername(), saved.getEmail(), saved.getRole().name(), saved.isEnabled());
+    }
+
+    /**
+     * DEPRECATED: Create employee (kept for backward compatibility)
+     * Now effectively same as createAdmin but creates EMPLOYEE role
+     * POST /api/admin/users/employees
+     */
     @PostMapping("/employees")
     @ResponseStatus(HttpStatus.CREATED)
     public EmployeeInfoDto createEmployee(@Valid @RequestBody CreateEmployeeRequest request) {

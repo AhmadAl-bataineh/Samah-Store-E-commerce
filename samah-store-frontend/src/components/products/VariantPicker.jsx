@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from 'react';
 
+/**
+ * VariantPicker Component
+ *
+ * IMPORTANT: Each variant has exactly ONE color and ONE size.
+ * NO splitting of comma-separated values.
+ * The variant is the source of truth for color/size.
+ */
 const VariantPicker = ({ variants, selectedVariant, onSelect }) => {
   const activeVariants = variants.filter(v => v.active !== false && v.deleted !== true);
 
@@ -7,12 +14,9 @@ const VariantPicker = ({ variants, selectedVariant, onSelect }) => {
     return null;
   }
 
-  // Group by size and color
-  const splitValues = (s) => (s ? String(s).split(/[،,]/).map(x => x.trim()).filter(Boolean) : []);
-
+  // Get unique sizes and colors from variants (NO splitting)
   const sizes = [...new Set(activeVariants.map(v => v.size).filter(Boolean))];
-  // derive colors from variants but split any comma/arabic-comma lists
-  const allColors = Array.from(new Set(activeVariants.flatMap(v => splitValues(v.color))));
+  const allColors = [...new Set(activeVariants.map(v => v.color).filter(Boolean))];
 
   const [selectedSize, setSelectedSize] = useState(selectedVariant?.size || null);
   const [selectedColor, setSelectedColor] = useState(selectedVariant?.color || null);
@@ -22,30 +26,10 @@ const VariantPicker = ({ variants, selectedVariant, onSelect }) => {
     setSelectedColor(selectedVariant?.color || null);
   }, [selectedVariant]);
 
-  const variantHasColor = (v, color) => {
-    if (!color) return true;
-    const parts = splitValues(v.color);
-    return parts.some(p => p.toLowerCase() === String(color).trim().toLowerCase());
-  };
 
-  const getVariantByAttributes = (size, color) => {
-    // prefer exact match of size+color; if not found, try size-only; then color-only; then any
-    let found = activeVariants.find(v => (size ? v.size === size : true) && variantHasColor(v, color));
-    if (found) return found;
-    if (size) {
-      found = activeVariants.find(v => v.size === size);
-      if (found) return found;
-    }
-    if (color) {
-      found = activeVariants.find(v => variantHasColor(v, color));
-      if (found) return found;
-    }
-    return activeVariants[0];
-  };
-
-  // Colors to render depend on selectedSize: when a size is chosen, show only colors for that size.
+  // Colors available for the selected size
   const colorsForSelectedSize = selectedSize
-    ? Array.from(new Set(activeVariants.filter(v => v.size === selectedSize).flatMap(v => splitValues(v.color))))
+    ? [...new Set(activeVariants.filter(v => v.size === selectedSize).map(v => v.color).filter(Boolean))]
     : allColors;
 
   return (
@@ -56,9 +40,9 @@ const VariantPicker = ({ variants, selectedVariant, onSelect }) => {
           <label className="block font-semibold mb-3">المقاس</label>
           <div className="flex flex-wrap gap-2">
             {sizes.map(size => {
-              // prefer variant matching current selectedColor if any
-              let variant = getVariantByAttributes(size, selectedColor);
-              if (!variant) variant = getVariantByAttributes(size, null);
+              // Find a variant with this size (prefer one matching selectedColor)
+              let variant = activeVariants.find(v => v.size === size && v.color === selectedColor);
+              if (!variant) variant = activeVariants.find(v => v.size === size);
 
               const isSelected = selectedSize === size;
               const isAvailable = variant && variant.stockQuantity > 0;
@@ -69,8 +53,8 @@ const VariantPicker = ({ variants, selectedVariant, onSelect }) => {
                   onClick={() => {
                     if (!variant) return;
                     setSelectedSize(size);
-                    // if variant has a color and selectedColor differs, sync it
-                    if (variant.color && variant.color !== selectedColor) setSelectedColor(variant.color);
+                    // Sync color from the selected variant
+                    if (variant.color) setSelectedColor(variant.color);
                     onSelect(variant);
                   }}
                   disabled={!isAvailable}
@@ -91,25 +75,27 @@ const VariantPicker = ({ variants, selectedVariant, onSelect }) => {
       )}
 
       {/* Color Selection */}
-      {(colorsForSelectedSize && colorsForSelectedSize.length > 0) && (
+      {colorsForSelectedSize.length > 0 && (
         <div>
           <label className="block font-semibold mb-3">اللون</label>
           <div className="flex flex-wrap gap-2">
             {colorsForSelectedSize.map(color => {
-              // prefer variant matching current selectedSize if any
-              let variant = getVariantByAttributes(selectedSize, color);
+              // Find variant with this exact color (and selected size if any)
+              let variant = selectedSize
+                ? activeVariants.find(v => v.size === selectedSize && v.color === color)
+                : activeVariants.find(v => v.color === color);
 
               const isSelected = selectedColor === color;
-              // disable color if no size selected or no matching variant or out of stock
-              const isAvailable = selectedSize && variant && variant.stockQuantity > 0;
+              const isAvailable = variant && variant.stockQuantity > 0;
 
               return (
                 <button
                   key={color}
                   onClick={() => {
-                    if (!selectedSize) return; // require size first
                     if (!variant) return;
                     setSelectedColor(color);
+                    // Sync size from the selected variant if not already set
+                    if (variant.size && !selectedSize) setSelectedSize(variant.size);
                     onSelect(variant);
                   }}
                   disabled={!isAvailable}
@@ -130,17 +116,19 @@ const VariantPicker = ({ variants, selectedVariant, onSelect }) => {
       )}
 
       {/* Selected Variant Info */}
-      {(selectedVariant || (selectedSize && selectedColor)) && (
+      {selectedVariant && (
         <div className="bg-brand-soft p-4 rounded-xl">
           <p className="text-sm text-gray-700">
             <span className="font-semibold">المنتج المحدد:</span>{' '}
-            { (selectedSize || selectedVariant?.size) && `${selectedSize || selectedVariant?.size}` }
-            { (selectedSize || selectedVariant?.size) && (selectedColor || selectedVariant?.color) && ' - ' }
-            { (selectedColor || selectedVariant?.color) && `${selectedColor || selectedVariant?.color}` }
+            {selectedVariant.size && selectedVariant.size}
+            {selectedVariant.size && selectedVariant.color && ' - '}
+            {selectedVariant.color && selectedVariant.color}
           </p>
-          <p className="text-sm text-gray-700 mt-1">
-            <span className="font-semibold">SKU:</span> {selectedVariant.sku}
-          </p>
+          {selectedVariant.sku && (
+            <p className="text-sm text-gray-700 mt-1">
+              <span className="font-semibold">SKU:</span> {selectedVariant.sku}
+            </p>
+          )}
         </div>
       )}
     </div>

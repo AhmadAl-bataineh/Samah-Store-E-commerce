@@ -4,7 +4,10 @@ import { useToast } from '../../context/ToastContext';
 import AdminLayout from '../../components/layout/AdminLayout';
 import { Modal } from '../../components/ui/Modal';
 import AdminOrderCard from '../../components/admin/AdminOrderCard';
-import { Filter, Eye, Copy, Phone, Mail, MapPin } from 'lucide-react';
+import { Eye, Copy, Phone, Mail, MapPin, SlidersHorizontal } from 'lucide-react';
+import { Card } from '../../components/ui/Card';
+import { PageHeader } from '../../components/ui/SectionHeader';
+import { StatusBadge } from '../../components/ui/StatusBadge';
 
 const STATUS_LABELS = {
   NEW: 'جديد',
@@ -23,6 +26,44 @@ const FILTER_OPTIONS = [
   { value: 'SHIPPED', label: 'تم الشحن' },
   { value: 'DELIVERED', label: 'تم التوصيل' },
 ];
+
+/**
+ * Map color names to hex values for visual swatches ONLY
+ * This does NOT determine the selected color - that comes from item.color
+ */
+const COLOR_HEX_MAP = {
+  'أحمر': '#dc2626', 'أزرق': '#2563eb', 'أخضر': '#16a34a', 'أصفر': '#eab308',
+  'برتقالي': '#ea580c', 'بنفسجي': '#9333ea', 'وردي': '#ec4899', 'أسود': '#171717',
+  'أبيض': '#ffffff', 'رمادي': '#6b7280', 'بني': '#92400e', 'بيج': '#d4a574',
+  'كحلي': '#1e3a5f', 'ذهبي': '#d4af37', 'فضي': '#c0c0c0', 'سماوي': '#06b6d4',
+  'زهري': '#f472b6', 'كريمي': '#fffdd0', 'عنابي': '#722f37', 'زيتي': '#556b2f',
+  'red': '#dc2626', 'blue': '#2563eb', 'green': '#16a34a', 'black': '#171717',
+  'white': '#ffffff', 'gray': '#6b7280', 'pink': '#ec4899', 'beige': '#d4a574',
+};
+
+/**
+ * Get hex color from color name (for visual swatch display only)
+ */
+const getColorHex = (colorName) => {
+  if (!colorName || typeof colorName !== 'string') return null;
+  return COLOR_HEX_MAP[colorName] || COLOR_HEX_MAP[colorName.toLowerCase().trim()] || null;
+};
+
+/**
+ * Color Swatch Component - Visual display only
+ */
+const ColorSwatch = ({ color }) => {
+  const hex = getColorHex(color);
+  if (!hex) return null;
+  const isWhite = hex.toLowerCase() === '#ffffff';
+  return (
+    <span
+      className={`w-3.5 h-3.5 rounded-full inline-block flex-shrink-0 ${isWhite ? 'border border-gray-300' : ''}`}
+      style={{ backgroundColor: hex }}
+      title={color}
+    />
+  );
+};
 
 const AdminOrders = () => {
   const [orders, setOrders] = useState([]);
@@ -161,42 +202,60 @@ const AdminOrders = () => {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <h1 className="text-2xl font-bold text-brand-ink">إدارة الطلبات</h1>
+        {/* Page Header with Filter */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <PageHeader
+            title="إدارة الطلبات"
+            subtitle={`${stats.total} طلب${stats.unassigned > 0 ? ` • ${stats.unassigned} غير معيّن` : ''}`}
+          />
 
           {/* Filter Dropdown */}
           <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-gray-500" />
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-primary focus:border-brand-primary"
-            >
-              {FILTER_OPTIONS.map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
+            <div className="relative">
+              <SlidersHorizontal className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="
+                  appearance-none bg-white border border-slate-200 rounded-xl
+                  pr-9 pl-4 py-2.5 text-sm text-slate-700
+                  focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary
+                  transition-all duration-200
+                  cursor-pointer hover:border-slate-300
+                "
+              >
+                {FILTER_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
 
-        {/* Active/Delivered Tabs */}
-        <div className="flex gap-2 border-b border-brand-border">
+        {/* Active/Delivered Tabs - Premium styling */}
+        <div className="flex gap-1 p-1 bg-slate-100/80 rounded-xl w-fit">
           <button
             onClick={() => {
               setDeliveredTab(false);
               setPage(0);
               setStatusFilter('');
             }}
-            className={`px-6 py-3 text-sm font-medium transition-colors relative ${
-              !deliveredTab
-                ? 'text-brand-primary border-b-2 border-brand-primary'
-                : 'text-gray-600 hover:text-brand-primary'
-            }`}
+            className={`
+              px-5 py-2 text-sm font-medium rounded-lg transition-all duration-200
+              ${!deliveredTab
+                ? 'bg-white text-slate-900 shadow-sm'
+                : 'text-slate-500 hover:text-slate-700'
+              }
+            `}
           >
-            الطلبات النشطة
-            {!deliveredTab && (
-              <span className="absolute top-1 left-1 w-2 h-2 bg-brand-primary rounded-full"></span>
-            )}
+            <span className="flex items-center gap-2">
+              الطلبات النشطة
+              {!deliveredTab && stats.total > 0 && (
+                <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-brand-primary/10 text-brand-accent rounded-full">
+                  {stats.total}
+                </span>
+              )}
+            </span>
           </button>
           <button
             onClick={() => {
@@ -204,123 +263,146 @@ const AdminOrders = () => {
               setPage(0);
               setStatusFilter('');
             }}
-            className={`px-6 py-3 text-sm font-medium transition-colors relative ${
-              deliveredTab
-                ? 'text-green-600 border-b-2 border-green-600'
-                : 'text-gray-600 hover:text-green-600'
-            }`}
+            className={`
+              px-5 py-2 text-sm font-medium rounded-lg transition-all duration-200
+              ${deliveredTab
+                ? 'bg-white text-slate-900 shadow-sm'
+                : 'text-slate-500 hover:text-slate-700'
+              }
+            `}
           >
-            الطلبات المُسلّمة
-            {deliveredTab && (
-              <span className="absolute top-1 left-1 w-2 h-2 bg-green-600 rounded-full"></span>
-            )}
+            <span className="flex items-center gap-2">
+              الطلبات المُسلّمة
+              {deliveredTab && (
+                <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-700 rounded-full">
+                  ✓
+                </span>
+              )}
+            </span>
           </button>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+        {/* Stats - Premium mini cards */}
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 sm:gap-3">
           <button
             onClick={() => setStatusFilter('')}
-            className={`p-3 rounded-xl border text-center transition ${
-              statusFilter === '' ? 'bg-brand-primary text-white border-brand-primary' : 'bg-white border-brand-border hover:border-brand-primary'
-            }`}
+            className={`
+              p-3 rounded-xl border text-center transition-all duration-200
+              ${statusFilter === '' 
+                ? 'bg-slate-900 text-white border-slate-900 shadow-sm' 
+                : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-sm'
+              }
+            `}
           >
-            <p className="text-xl font-bold">{stats.total}</p>
-            <p className="text-xs">الكل</p>
+            <p className="text-lg sm:text-xl font-bold tabular-nums">{stats.total}</p>
+            <p className="text-[10px] sm:text-xs opacity-80">الكل</p>
           </button>
           <button
             onClick={() => setStatusFilter('UNASSIGNED')}
-            className={`p-3 rounded-xl border text-center transition ${
-              statusFilter === 'UNASSIGNED' ? 'bg-orange-500 text-white border-orange-500' : 'bg-white border-brand-border hover:border-orange-500'
-            }`}
+            className={`
+              p-3 rounded-xl border text-center transition-all duration-200
+              ${statusFilter === 'UNASSIGNED' 
+                ? 'bg-amber-500 text-white border-amber-500 shadow-sm' 
+                : 'bg-amber-50 border-amber-100 text-amber-700 hover:border-amber-200 hover:shadow-sm'
+              }
+            `}
           >
-            <p className="text-xl font-bold">{stats.unassigned}</p>
-            <p className="text-xs">غير معيّنة</p>
+            <p className="text-lg sm:text-xl font-bold tabular-nums">{stats.unassigned}</p>
+            <p className="text-[10px] sm:text-xs opacity-80">غير معيّنة</p>
           </button>
           <button
             onClick={() => setStatusFilter('NEW')}
-            className={`p-3 rounded-xl border text-center transition ${
-              statusFilter === 'NEW' ? 'bg-gray-500 text-white border-gray-500' : 'bg-white border-brand-border hover:border-gray-500'
-            }`}
+            className={`
+              p-3 rounded-xl border text-center transition-all duration-200
+              ${statusFilter === 'NEW' 
+                ? 'bg-slate-600 text-white border-slate-600 shadow-sm' 
+                : 'bg-slate-50 border-slate-100 text-slate-700 hover:border-slate-200 hover:shadow-sm'
+              }
+            `}
           >
-            <p className="text-xl font-bold">{stats.new}</p>
-            <p className="text-xs">جديد</p>
+            <p className="text-lg sm:text-xl font-bold tabular-nums">{stats.new}</p>
+            <p className="text-[10px] sm:text-xs opacity-80">جديد</p>
           </button>
           <button
             onClick={() => setStatusFilter('PROCESSING')}
-            className={`p-3 rounded-xl border text-center transition ${
-              statusFilter === 'PROCESSING' ? 'bg-blue-500 text-white border-blue-500' : 'bg-white border-brand-border hover:border-blue-500'
-            }`}
+            className={`
+              p-3 rounded-xl border text-center transition-all duration-200
+              ${statusFilter === 'PROCESSING' 
+                ? 'bg-indigo-500 text-white border-indigo-500 shadow-sm' 
+                : 'bg-indigo-50 border-indigo-100 text-indigo-700 hover:border-indigo-200 hover:shadow-sm'
+              }
+            `}
           >
-            <p className="text-xl font-bold">{stats.processing}</p>
-            <p className="text-xs">قيد المعالجة</p>
+            <p className="text-lg sm:text-xl font-bold tabular-nums">{stats.processing}</p>
+            <p className="text-[10px] sm:text-xs opacity-80">قيد المعالجة</p>
           </button>
           <button
             onClick={() => setStatusFilter('SHIPPED')}
-            className={`p-3 rounded-xl border text-center transition ${
-              statusFilter === 'SHIPPED' ? 'bg-purple-500 text-white border-purple-500' : 'bg-white border-brand-border hover:border-purple-500'
-            }`}
+            className={`
+              p-3 rounded-xl border text-center transition-all duration-200
+              ${statusFilter === 'SHIPPED' 
+                ? 'bg-violet-500 text-white border-violet-500 shadow-sm' 
+                : 'bg-violet-50 border-violet-100 text-violet-700 hover:border-violet-200 hover:shadow-sm'
+              }
+            `}
           >
-            <p className="text-xl font-bold">{stats.shipped}</p>
-            <p className="text-xs">تم الشحن</p>
+            <p className="text-lg sm:text-xl font-bold tabular-nums">{stats.shipped}</p>
+            <p className="text-[10px] sm:text-xs opacity-80">تم الشحن</p>
           </button>
           <button
             onClick={() => setStatusFilter('DELIVERED')}
-            className={`p-3 rounded-xl border text-center transition ${
-              statusFilter === 'DELIVERED' ? 'bg-green-500 text-white border-green-500' : 'bg-white border-brand-border hover:border-green-500'
-            }`}
+            className={`
+              p-3 rounded-xl border text-center transition-all duration-200
+              ${statusFilter === 'DELIVERED' 
+                ? 'bg-emerald-500 text-white border-emerald-500 shadow-sm' 
+                : 'bg-emerald-50 border-emerald-100 text-emerald-700 hover:border-emerald-200 hover:shadow-sm'
+              }
+            `}
           >
-            <p className="text-xl font-bold">{stats.delivered}</p>
-            <p className="text-xs">تم التوصيل</p>
+            <p className="text-lg sm:text-xl font-bold tabular-nums">{stats.delivered}</p>
+            <p className="text-[10px] sm:text-xs opacity-80">تم التوصيل</p>
           </button>
         </div>
 
         {filteredOrders.length === 0 ? (
-          <div className="bg-white p-12 rounded-2xl text-center border border-brand-border">
-            <p className="text-gray-500">
+          <Card variant="default" padding="lg" className="text-center">
+            <p className="text-slate-500">
               {statusFilter ? `لا توجد طلبات ${FILTER_OPTIONS.find(o => o.value === statusFilter)?.label || ''}` : 'لا توجد طلبات'}
             </p>
-          </div>
+          </Card>
         ) : (
           <>
             {/* Desktop Table (hidden on small screens; visible md+) */}
-            <div className="hidden md:block bg-white rounded-2xl shadow-sm border border-brand-border overflow-x-auto">
+            <div className="hidden md:block bg-white rounded-xl shadow-sm border border-slate-200/60 overflow-hidden">
+              <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-brand-soft border-b border-brand-border">
+                <thead className="bg-slate-50/80 border-b border-slate-100">
                   <tr>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-brand-ink">رقم الطلب</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-brand-ink">الحالة</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-brand-ink">الإجمالي</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-brand-ink">المدينة</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-brand-ink">تعيين موظف</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-brand-ink">تحديث الحالة</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-brand-ink">الإجراءات</th>
+                    <th className="px-4 py-3 text-right text-[11px] font-semibold text-slate-600 uppercase tracking-wide">رقم الطلب</th>
+                    <th className="px-4 py-3 text-right text-[11px] font-semibold text-slate-600 uppercase tracking-wide">الحالة</th>
+                    <th className="px-4 py-3 text-right text-[11px] font-semibold text-slate-600 uppercase tracking-wide">الإجمالي</th>
+                    <th className="px-4 py-3 text-right text-[11px] font-semibold text-slate-600 uppercase tracking-wide">المدينة</th>
+                    <th className="px-4 py-3 text-right text-[11px] font-semibold text-slate-600 uppercase tracking-wide">تعيين موظف</th>
+                    <th className="px-4 py-3 text-right text-[11px] font-semibold text-slate-600 uppercase tracking-wide">تحديث الحالة</th>
+                    <th className="px-4 py-3 text-right text-[11px] font-semibold text-slate-600 uppercase tracking-wide">الإجراءات</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {filteredOrders.map((order) => (
-                    <tr key={order.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-4 text-sm font-medium">#{order.id}</td>
-                      <td className="px-4 py-4">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          order.status === 'DELIVERED' ? 'bg-green-100 text-green-800' :
-                          order.status === 'SHIPPED' ? 'bg-purple-100 text-purple-800' :
-                          order.status === 'PROCESSING' ? 'bg-blue-100 text-blue-800' :
-                          order.status === 'CANCELLED' ? 'bg-red-100 text-red-800' :
-                          'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {STATUS_LABELS[order.status]}
-                        </span>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredOrders.map((order, idx) => (
+                    <tr key={order.id} className={`hover:bg-slate-50/50 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-25'}`}>
+                      <td className="px-4 py-3.5 text-sm font-medium text-slate-900">#{order.id}</td>
+                      <td className="px-4 py-3.5">
+                        <StatusBadge status={order.status} size="sm" />
                       </td>
-                      <td className="px-4 py-4 text-sm font-medium">{order.total?.toFixed(2)} د.أ</td>
-                      <td className="px-4 py-4 text-sm">{order.address?.city || '-'}</td>
-                      <td className="px-4 py-4">
+                      <td className="px-4 py-3.5 text-sm font-semibold text-slate-900 tabular-nums">{order.total?.toFixed(2)} د.أ</td>
+                      <td className="px-4 py-3.5 text-sm text-slate-600">{order.address?.city || '-'}</td>
+                      <td className="px-4 py-3.5">
                         <div className="flex flex-col gap-1">
                           <select
                             value={order.assignedEmployee?.id || ''}
                             onChange={(e) => handleAssignEmployee(order.id, e.target.value)}
                             disabled={assigningOrderId === order.id || order.status === 'DELIVERED' || order.status === 'CANCELLED'}
-                            className="text-xs border border-gray-300 rounded px-2 py-1.5 w-32 disabled:opacity-50 disabled:bg-gray-50"
+                            className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 w-32 disabled:opacity-50 disabled:bg-slate-50 focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-colors"
                           >
                             <option value="">-- اختر موظف --</option>
                             {employees.map(emp => (
@@ -330,18 +412,18 @@ const AdminOrders = () => {
                             ))}
                           </select>
                           {order.assignedEmployee && (
-                            <span className="text-xs text-green-600">
+                            <span className="text-[10px] text-emerald-600 font-medium">
                               ✓ {order.assignedEmployee.username}
                             </span>
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-4">
+                      <td className="px-4 py-3.5">
                         <select
                           value={order.status}
                           onChange={(e) => handleStatusUpdate(order.id, e.target.value)}
                           disabled={updatingId === order.id}
-                          className="text-xs border border-gray-300 rounded px-2 py-1.5 disabled:opacity-50"
+                          className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 disabled:opacity-50 focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-colors"
                         >
                           {Object.keys(STATUS_LABELS).map(status => (
                             <option key={status} value={status}>
@@ -350,10 +432,15 @@ const AdminOrders = () => {
                           ))}
                         </select>
                       </td>
-                      <td className="px-4 py-4">
+                      <td className="px-4 py-3.5">
                         <button
                           onClick={() => openDetails(order)}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-brand-primary text-white text-xs rounded-lg hover:bg-brand-primaryHover transition"
+                          className="
+                            inline-flex items-center gap-1.5 px-3 py-1.5
+                            bg-slate-900 text-white text-xs font-medium rounded-lg
+                            hover:bg-slate-800 transition-colors
+                            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400
+                          "
                         >
                           <Eye className="w-3.5 h-3.5" />
                           تفاصيل
@@ -363,10 +450,11 @@ const AdminOrders = () => {
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
 
             {/* Mobile Cards (visible on small screens < md) */}
-            <div className="block md:hidden">
+            <div className="block md:hidden space-y-3">
               {filteredOrders.map(order => (
                 <AdminOrderCard
                   key={order.id}
@@ -385,19 +473,19 @@ const AdminOrders = () => {
             </div>
 
              {totalPages > 1 && (
-               <div className="flex justify-center gap-2">
+               <div className="flex justify-center items-center gap-2 pt-4">
                  <button
                    onClick={() => setPage(p => Math.max(0, p - 1))}
                    disabled={page === 0}
-                   className="px-4 py-2 bg-white border border-brand-border rounded-lg disabled:opacity-50"
+                   className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                  >
                    السابق
                  </button>
-                 <span className="px-4 py-2">صفحة {page + 1} من {totalPages}</span>
+                 <span className="px-4 py-2 text-sm text-slate-600">صفحة {page + 1} من {totalPages}</span>
                  <button
                    onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
                    disabled={page >= totalPages - 1}
-                   className="px-4 py-2 bg-white border border-brand-border rounded-lg disabled:opacity-50"
+                   className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                  >
                    التالي
                  </button>
@@ -499,24 +587,61 @@ const AdminOrders = () => {
                 </div>
               </div>
 
-              {/* Order Items */}
+              {/* Order Items - Improved RTL Design */}
               <div>
-                <h3 className="font-semibold text-brand-ink mb-3">المنتجات</h3>
-                <div className="space-y-2">
+                <h3 className="font-semibold text-brand-ink mb-3">المنتجات ({selectedOrder.items?.length || 0})</h3>
+                <div className="space-y-3">
                   {selectedOrder.items?.map((item, idx) => (
-                    <div key={idx} className="flex items-center justify-between bg-white p-3 rounded-lg border border-brand-border">
-                      <div className="flex-1">
-                        <p className="font-medium text-sm">{item.productName}</p>
-                        <p className="text-xs text-gray-500">
-                          {item.size && `مقاس: ${item.size}`}
-                          {item.size && item.color && ' • '}
-                          {item.color && `لون: ${item.color}`}
-                        </p>
-                        {item.variantSku && <p className="text-xs text-gray-400">SKU: {item.variantSku}</p>}
-                      </div>
-                      <div className="text-left">
-                        <p className="text-sm font-medium">{item.lineTotal?.toFixed(2)} د.أ</p>
-                        <p className="text-xs text-gray-500">{item.quantity} × {item.unitPrice?.toFixed(2)} د.أ</p>
+                    <div key={idx} className="bg-white rounded-xl border border-brand-border overflow-hidden">
+                      {/* Product Row */}
+                      <div className="flex items-start justify-between p-4">
+                        {/* Right Side: Product Info */}
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-gray-900 text-sm leading-tight mb-2">
+                            {item.productName}
+                          </h4>
+                          {item.variantSku && (
+                            <p className="text-xs text-gray-400 font-mono mb-2">SKU: {item.variantSku}</p>
+                          )}
+
+                          {/* Variant Chips */}
+                          <div className="flex flex-wrap items-center gap-2">
+                            {/* Color Chip - Use item.color directly (NO guessing) */}
+                            {item.color ? (
+                              <span className="inline-flex items-center gap-1.5 bg-gray-100 px-2.5 py-1 rounded-lg text-xs">
+                                <ColorSwatch color={item.color} />
+                                <span className="text-gray-600">اللون:</span>
+                                <span className="font-medium text-gray-800">{item.color}</span>
+                              </span>
+                            ) : null}
+
+                            {/* Size Chip */}
+                            {item.size && (
+                              <span className="inline-flex items-center gap-1.5 bg-gray-100 px-2.5 py-1 rounded-lg text-xs">
+                                <span className="text-gray-600">المقاس:</span>
+                                <span className="font-medium text-gray-800">{item.size}</span>
+                              </span>
+                            )}
+
+                            {/* Quantity Chip */}
+                            <span className="inline-flex items-center gap-1.5 bg-blue-50 px-2.5 py-1 rounded-lg text-xs">
+                              <span className="text-blue-600">الكمية:</span>
+                              <span className="font-medium text-blue-800">{item.quantity}</span>
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Left Side: Price */}
+                        <div className="text-left flex-shrink-0 mr-4">
+                          <p className="text-base font-bold text-brand-primary">
+                            {item.lineTotal?.toFixed(2)} د.أ
+                          </p>
+                          {item.quantity > 1 && (
+                            <p className="text-xs text-gray-500 mt-0.5">
+                              {item.quantity} × {item.unitPrice?.toFixed(2)} د.أ
+                            </p>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}

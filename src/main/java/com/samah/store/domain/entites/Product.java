@@ -6,7 +6,12 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "products",
-        uniqueConstraints = @UniqueConstraint(name = "uk_products_slug", columnNames = "slug"))
+        uniqueConstraints = @UniqueConstraint(name = "uk_products_slug", columnNames = "slug"),
+        indexes = {
+            @Index(name = "idx_products_active_deleted", columnList = "active, deleted"),
+            @Index(name = "idx_products_category", columnList = "category_id"),
+            @Index(name = "idx_products_created_at", columnList = "created_at")
+        })
 @Getter
 @Setter
 public class Product extends BaseEntity {

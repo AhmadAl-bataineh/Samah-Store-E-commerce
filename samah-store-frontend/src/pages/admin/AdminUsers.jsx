@@ -8,14 +8,14 @@ import { Input } from '../../components/ui/Input';
 import { UserPlus, UserCheck, UserX } from 'lucide-react';
 
 const AdminUsers = () => {
-  const [employees, setEmployees] = useState([]);
+  const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionId, setActionId] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const { showToast } = useToast();
 
-  // Create employee form
+  // Create admin form
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -24,16 +24,17 @@ const AdminUsers = () => {
   const [formErrors, setFormErrors] = useState({});
 
   useEffect(() => {
-    loadEmployees();
+    loadAdmins();
   }, []);
 
-  const loadEmployees = async () => {
+  const loadAdmins = async () => {
     try {
       setLoading(true);
-      const response = await adminApi.listEmployees();
-      setEmployees(response.data || []);
+      // Load both admins and employees (they now have same access)
+      const response = await adminApi.listAdmins();
+      setAdmins(response.data || []);
     } catch (error) {
-      showToast('فشل تحميل قائمة الموظفين', 'error');
+      showToast('فشل تحميل قائمة المديرين', 'error');
     } finally {
       setLoading(false);
     }
@@ -72,18 +73,18 @@ const AdminUsers = () => {
     return Object.keys(errors).length === 0;
   };
 
-  const handleCreateEmployee = async (e) => {
+  const handleCreateAdmin = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
 
     try {
       setSubmitting(true);
-      await adminApi.createEmployee(formData);
-      showToast('تم إنشاء حساب الموظف بنجاح', 'success');
+      await adminApi.createAdmin(formData);
+      showToast('تم إنشاء حساب المدير بنجاح', 'success');
       handleCloseModal();
-      loadEmployees();
+      loadAdmins();
     } catch (error) {
-      const message = error.response?.data?.message || 'فشل إنشاء حساب الموظف';
+      const message = error.response?.data?.message || 'فشل إنشاء حساب المدير';
       showToast(message, 'error');
     } finally {
       setSubmitting(false);
@@ -92,20 +93,20 @@ const AdminUsers = () => {
 
   const handleToggleStatus = async (userId, currentlyEnabled) => {
     const action = currentlyEnabled ? 'تعطيل' : 'تفعيل';
-    if (!window.confirm(`هل أنت متأكد من ${action} هذا الموظف؟`)) return;
+    if (!window.confirm(`هل أنت متأكد من ${action} هذا المدير؟`)) return;
 
     try {
       setActionId(userId);
       if (currentlyEnabled) {
         await adminApi.disableUser(userId);
-        showToast('تم تعطيل الموظف بنجاح', 'success');
+        showToast('تم تعطيل المدير بنجاح', 'success');
       } else {
         await adminApi.enableUser(userId);
-        showToast('تم تفعيل الموظف بنجاح', 'success');
+        showToast('تم تفعيل المدير بنجاح', 'success');
       }
-      loadEmployees();
+      loadAdmins();
     } catch (error) {
-      const message = error.response?.data?.message || `فشل ${action} الموظف`;
+      const message = error.response?.data?.message || `فشل ${action} المدير`;
       showToast(message, 'error');
     } finally {
       setActionId(null);
@@ -124,33 +125,33 @@ const AdminUsers = () => {
     <AdminLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-brand-ink">إدارة الموظفين</h1>
+          <h1 className="text-2xl font-bold text-brand-ink">إدارة المديرين</h1>
           <Button onClick={handleOpenCreate} className="flex items-center gap-2">
             <UserPlus className="w-4 h-4" />
-            إضافة موظف
+            إضافة مدير
           </Button>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <div className="bg-white p-4 rounded-xl border border-brand-border text-center">
-            <p className="text-2xl font-bold text-brand-primary">{employees.length}</p>
-            <p className="text-xs text-gray-500">إجمالي الموظفين</p>
+            <p className="text-2xl font-bold text-brand-primary">{admins.length}</p>
+            <p className="text-xs text-gray-500">إجمالي المديرين</p>
           </div>
           <div className="bg-white p-4 rounded-xl border border-brand-border text-center">
-            <p className="text-2xl font-bold text-green-600">{employees.filter(e => e.enabled).length}</p>
+            <p className="text-2xl font-bold text-green-600">{admins.filter(e => e.enabled).length}</p>
             <p className="text-xs text-gray-500">نشط</p>
           </div>
           <div className="bg-white p-4 rounded-xl border border-brand-border text-center">
-            <p className="text-2xl font-bold text-red-600">{employees.filter(e => !e.enabled).length}</p>
+            <p className="text-2xl font-bold text-red-600">{admins.filter(e => !e.enabled).length}</p>
             <p className="text-xs text-gray-500">معطّل</p>
           </div>
         </div>
 
-        {employees.length === 0 ? (
+        {admins.length === 0 ? (
           <div className="bg-white p-12 rounded-2xl text-center border border-brand-border">
-            <p className="text-gray-500 mb-4">لا يوجد موظفين</p>
-            <Button onClick={handleOpenCreate}>إضافة أول موظف</Button>
+            <p className="text-gray-500 mb-4">لا يوجد مديرين</p>
+            <Button onClick={handleOpenCreate}>إضافة أول مدير</Button>
           </div>
         ) : (
           <div className="bg-white rounded-2xl shadow-sm border border-brand-border overflow-hidden">
@@ -160,42 +161,50 @@ const AdminUsers = () => {
                   <th className="px-6 py-3 text-right text-xs font-semibold text-brand-ink">ID</th>
                   <th className="px-6 py-3 text-right text-xs font-semibold text-brand-ink">اسم المستخدم</th>
                   <th className="px-6 py-3 text-right text-xs font-semibold text-brand-ink">البريد الإلكتروني</th>
+                  <th className="px-6 py-3 text-right text-xs font-semibold text-brand-ink">الدور</th>
                   <th className="px-6 py-3 text-right text-xs font-semibold text-brand-ink">الحالة</th>
                   <th className="px-6 py-3 text-right text-xs font-semibold text-brand-ink">إجراءات</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {employees.map((emp) => (
-                  <tr key={emp.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 text-sm">#{emp.id}</td>
-                    <td className="px-6 py-4 text-sm font-medium">{emp.username}</td>
-                    <td className="px-6 py-4 text-sm">{emp.email}</td>
+                {admins.map((admin) => (
+                  <tr key={admin.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 text-sm">#{admin.id}</td>
+                    <td className="px-6 py-4 text-sm font-medium">{admin.username}</td>
+                    <td className="px-6 py-4 text-sm">{admin.email}</td>
                     <td className="px-6 py-4">
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        emp.enabled ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        admin.role === 'ADMIN' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
                       }`}>
-                        {emp.enabled ? 'نشط' : 'معطّل'}
+                        {admin.role === 'ADMIN' ? 'مدير' : 'مدير مساعد'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        admin.enabled ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                        {admin.enabled ? 'نشط' : 'معطّل'}
                       </span>
                     </td>
                     <td className="px-6 py-4">
                       <button
-                        onClick={() => handleToggleStatus(emp.id, emp.enabled)}
-                        disabled={actionId === emp.id}
+                        onClick={() => handleToggleStatus(admin.id, admin.enabled)}
+                        disabled={actionId === admin.id}
                         className={`flex items-center gap-1 text-sm disabled:opacity-50 ${
-                          emp.enabled 
+                          admin.enabled 
                             ? 'text-red-600 hover:text-red-800' 
                             : 'text-green-600 hover:text-green-800'
                         }`}
                       >
-                        {emp.enabled ? (
+                        {admin.enabled ? (
                           <>
                             <UserX className="w-4 h-4" />
-                            {actionId === emp.id ? 'جاري...' : 'تعطيل'}
+                            {actionId === admin.id ? 'جاري...' : 'تعطيل'}
                           </>
                         ) : (
                           <>
                             <UserCheck className="w-4 h-4" />
-                            {actionId === emp.id ? 'جاري...' : 'تفعيل'}
+                            {actionId === admin.id ? 'جاري...' : 'تفعيل'}
                           </>
                         )}
                       </button>
@@ -208,23 +217,23 @@ const AdminUsers = () => {
         )}
       </div>
 
-      {/* Create Employee Modal */}
+      {/* Create Admin Modal */}
       <Modal
         isOpen={showCreateModal}
         onClose={handleCloseModal}
-        title="إضافة موظف جديد"
+        title="إضافة مدير جديد"
         footer={
           <div className="flex gap-3 justify-end">
             <Button variant="outline" onClick={handleCloseModal} disabled={submitting}>
               إلغاء
             </Button>
-            <Button onClick={handleCreateEmployee} disabled={submitting}>
+            <Button onClick={handleCreateAdmin} disabled={submitting}>
               {submitting ? 'جاري الإنشاء...' : 'إنشاء'}
             </Button>
           </div>
         }
       >
-        <form onSubmit={handleCreateEmployee} className="space-y-4">
+        <form onSubmit={handleCreateAdmin} className="space-y-4">
           <Input
             label="اسم المستخدم"
             value={formData.username}

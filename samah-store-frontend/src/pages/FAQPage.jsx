@@ -1,10 +1,20 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Container from '../components/layout/Container';
 import SectionTitle from '../components/common/SectionTitle';
 import { ChevronDown } from 'lucide-react';
+import { updatePageMeta } from '../utils/seo';
 
 const FAQPage = () => {
   const [openIndex, setOpenIndex] = useState(null);
+
+  // SEO
+  useEffect(() => {
+    updatePageMeta({
+      title: 'الأسئلة الشائعة',
+      description: 'إجابات على الأسئلة الشائعة حول التسوق في سماح ستور - الشحن، الدفع، الإرجاع والاستبدال.',
+      url: '/faq',
+    });
+  }, []);
 
   const faqs = [
     {

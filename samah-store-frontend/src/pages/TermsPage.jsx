@@ -1,7 +1,18 @@
+import { useEffect } from 'react';
 import Container from '../components/layout/Container';
 import SectionTitle from '../components/common/SectionTitle';
+import { updatePageMeta } from '../utils/seo';
 
 const TermsPage = () => {
+  // SEO
+  useEffect(() => {
+    updatePageMeta({
+      title: 'الشروط والأحكام',
+      description: 'الشروط والأحكام لاستخدام متجر سماح ستور - حقوقك وواجباتك كمتسوق.',
+      url: '/terms',
+    });
+  }, []);
+
   return (
     <div className="py-8">
       <Container>

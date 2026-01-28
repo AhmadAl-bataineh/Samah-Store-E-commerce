@@ -25,7 +25,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Allow public auth endpoints and API docs (cover common swagger paths)
                         .requestMatchers("/api/auth/**", "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs", "/v3/api-docs/**").permitAll()
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        // ADMIN and EMPLOYEE now have same access to admin endpoints
+                        .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "EMPLOYEE")
                         .requestMatchers("/api/employee/**").hasAnyRole("ADMIN", "EMPLOYEE")
                         .requestMatchers("/api/customer/**").hasAnyRole("CUSTOMER", "ADMIN")
                         .anyRequest().permitAll()

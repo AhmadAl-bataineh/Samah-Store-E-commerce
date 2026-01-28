@@ -79,11 +79,10 @@ const RegisterPage = () => {
 
       const role = normalizeRole(response.user?.role);
 
+      // Both ADMIN and EMPLOYEE go to admin dashboard
       let targetRoute = '/';
-      if (role === ROLES.ADMIN) {
+      if (role === ROLES.ADMIN || role === ROLES.EMPLOYEE) {
         targetRoute = '/admin/dashboard';
-      } else if (role === ROLES.EMPLOYEE) {
-        targetRoute = '/employee/dashboard';
       }
 
       navigate(targetRoute, { replace: true });

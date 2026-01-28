@@ -31,3 +31,40 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Production Environment ###
+.env
+.env.local
+.env.production
+!.env.example
+
+### SSL Certificates ###
+nginx/ssl/*.pem
+nginx/ssl/*.key
+nginx/ssl/*.crt
+!nginx/ssl/.gitkeep
+
+### Docker ###
+docker-compose.override.yml
+
+### Uploads ###
+uploads/*
+!uploads/.gitkeep
+
+### Logs ###
+*.log
+logs/
+
+### OS ###
+.DS_Store
+Thumbs.db
+
+# Secrets
+.env
+# Node
+node_modules/
+# Java
+target/
+uploads/
+nginx/ssl/
+

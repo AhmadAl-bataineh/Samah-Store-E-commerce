@@ -37,6 +37,7 @@ export const Button = ({
         font-medium tracking-wide
         transition-all duration-200
         disabled:opacity-50 disabled:cursor-not-allowed
+        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-berry-400 focus-visible:ring-offset-2
         ${variants[variant]} 
         ${sizes[size]}
         ${roundedOptions[rounded]}

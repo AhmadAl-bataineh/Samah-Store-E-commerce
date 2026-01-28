@@ -21,6 +21,9 @@ FROM eclipse-temurin:17-jre-alpine
 
 WORKDIR /app
 
+# Install wget for healthcheck (not included in alpine by default)
+RUN apk add --no-cache wget
+
 # Copy JAR from builder
 COPY --from=builder /app/target/*.jar app.jar
 
@@ -34,9 +37,9 @@ USER appuser
 # Expose port
 EXPOSE 8080
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:8080/api/categories || exit 1
+# Health check - give Spring Boot enough time to start (90s)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=5 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:8080/api/health || exit 1
 
 # Set production profile
 ENV SPRING_PROFILES_ACTIVE=prod

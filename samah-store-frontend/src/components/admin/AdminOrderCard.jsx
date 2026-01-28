@@ -1,90 +1,70 @@
 import React from 'react';
-import { StatusSelect, EmployeeSelect, ActionsRow } from './OrderControls';
+import { StatusSelect, EmployeeSelect } from './OrderControls';
+import { StatusBadge } from '../ui/StatusBadge';
+import { Eye, MapPin, User } from 'lucide-react';
 
-const IconView = ({ className = 'w-4 h-4' }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-    <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
-
-const IconEdit = ({ className = 'w-4 h-4' }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-    <path d="M3 21v-3.75L14.81 5.44a2 2 0 0 1 2.82 0l0.93 0.93a2 2 0 0 1 0 2.82L6.75 21H3z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M14 7l3 3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
-
-const IconDelete = ({ className = 'w-4 h-4' }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-    <path d="M3 6h18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M8 6v14a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M10 11v6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M14 11v6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
-
-const AdminOrderCard = ({ item, onView, onEdit, onDelete, employees = [], assigningOrderId, updatingId, STATUS_LABELS = {}, onAssign, onUpdateStatus }) => {
+const AdminOrderCard = ({ item, onView, employees = [], assigningOrderId, updatingId, STATUS_LABELS = {}, onAssign, onUpdateStatus }) => {
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-brand-border p-4 mb-3">
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <div className="text-sm font-medium">#{item.id}</div>
-          <div className="text-xs text-slate-600 mt-1">العميل: {item.customer?.username || item.customerName || '-'}</div>
+    <div className="bg-white rounded-xl border border-slate-200/60 p-4 transition-all duration-200 hover:shadow-soft hover:border-slate-300/60">
+      {/* Header: Order ID & Total */}
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-bold text-slate-900">#{item.id}</span>
+          <StatusBadge status={item.status} size="sm" />
         </div>
-        <div>
-          <div className="text-sm font-semibold">{(item.total || 0).toFixed(2)} د.أ</div>
-        </div>
+        <span className="text-sm font-bold text-slate-900 tabular-nums">
+          {(item.total || 0).toFixed(2)} د.أ
+        </span>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 text-sm text-slate-600 mt-3">
-        <div>المدينة: {item.address?.city || '-'}</div>
-        <div>الحالة: {item.status}</div>
+      {/* Customer & Location Info */}
+      <div className="flex flex-wrap gap-3 text-xs text-slate-600 mb-3">
+        <span className="inline-flex items-center gap-1.5">
+          <User className="w-3.5 h-3.5 text-slate-400" />
+          {item.customer?.username || item.customerName || 'عميل'}
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <MapPin className="w-3.5 h-3.5 text-slate-400" />
+          {item.address?.city || '-'}
+        </span>
       </div>
 
-      {/* Controls section: reuse desktop controls (status select, employee select, actions) */}
-      <div className="mt-4 pt-3 border-t border-brand-border">
-        <div className="text-sm font-medium mb-2">إدارة الطلب</div>
-        <div className="grid grid-cols-1 gap-3">
-          <StatusSelect order={item} STATUS_LABELS={STATUS_LABELS} updatingId={updatingId} onUpdateStatus={onUpdateStatus} />
-          <EmployeeSelect order={item} employees={employees} assigningOrderId={assigningOrderId} onAssign={onAssign} />
-          <ActionsRow onView={() => onView && onView(item)} onEdit={() => onEdit && onEdit(item)} onDelete={() => onDelete && onDelete(item)} />
+      {/* Controls Section */}
+      <div className="pt-3 border-t border-slate-100 space-y-3">
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1 block">تحديث الحالة</label>
+            <StatusSelect order={item} STATUS_LABELS={STATUS_LABELS} updatingId={updatingId} onUpdateStatus={onUpdateStatus} />
+          </div>
+          <div>
+            <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1 block">تعيين موظف</label>
+            <EmployeeSelect order={item} employees={employees} assigningOrderId={assigningOrderId} onAssign={onAssign} />
+          </div>
         </div>
-      </div>
 
-      {/* Existing quick action buttons (kept for backward compatibility) */}
-      <div className="flex gap-2 mt-3">
-        <button
-          type="button"
-          onClick={() => onView && onView(item)}
-          className="flex-1 h-12 rounded-xl bg-white border border-brand-border flex items-center justify-center gap-2"
-        >
-          <IconView />
-          <span>عرض</span>
-        </button>
-
-        {onEdit && (
-          <button
-            type="button"
-            onClick={() => onEdit && onEdit(item)}
-            className="flex-1 h-12 rounded-xl bg-white border border-brand-border flex items-center justify-center gap-2"
-          >
-            <IconEdit />
-            <span>تحرير</span>
-          </button>
-        )}
-
-        {onDelete && (
-          <button
-            type="button"
-            onClick={() => onDelete && onDelete(item)}
-            className="flex-1 h-12 rounded-xl bg-white border border-red-200 text-red-600 flex items-center justify-center gap-2"
-          >
-            <IconDelete />
-            <span>حذف</span>
-          </button>
+        {item.assignedEmployee && (
+          <div className="text-[10px] text-emerald-600 font-medium">
+            ✓ معيّن لـ: {item.assignedEmployee.username}
+          </div>
         )}
       </div>
+
+      {/* View Details Button */}
+      <button
+        type="button"
+        onClick={() => onView && onView(item)}
+        className="
+          w-full mt-3 h-10 rounded-xl
+          bg-slate-900 text-white text-sm font-medium
+          flex items-center justify-center gap-2
+          hover:bg-slate-800 active:scale-[0.98]
+          transition-all duration-200
+          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400
+        "
+      >
+        <Eye className="w-4 h-4" />
+        عرض التفاصيل
+      </button>
     </div>
   );
 };
